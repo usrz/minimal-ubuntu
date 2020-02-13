@@ -1,0 +1,31 @@
+Package: minimal-os
+Architecture: all
+Version: 1.0.0
+Priority: optional
+Section: metapackages
+Maintainer: Pier Fumagalli <pier@usrz.com>
+Homepage: https://github.com/usrz/minimal-ubuntu
+Depends: apt-utils,
+         bzip2,
+         ca-certificates,
+         curl,
+         dbus,
+         deborphan,
+         dnsutils,
+         dosfstools,
+         gnupg1,
+         initramfs-tools,
+         iproute2,
+         iputils-ping,
+         less,
+         locales,
+         man-db,
+         net-tools,
+         openssh-server,
+         rsyslog,
+         sudo,
+         systemd,
+         systemd-sysv,
+         vim,
+         whiptail
+Description: A minimal set of dependencies for Ubuntu systems

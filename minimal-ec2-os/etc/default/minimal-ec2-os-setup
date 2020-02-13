@@ -1,0 +1,2 @@
+# Set this to "true" to re-run the setup procedure
+RUN_SETUP=false

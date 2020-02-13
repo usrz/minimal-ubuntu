@@ -1,0 +1,12 @@
+[Unit]
+Description=Minimal EC2 Setup Service
+Requires=network-online.target
+Before=ssh.service
+
+[Service]
+EnvironmentFile=/etc/default/minimal-ec2-os-setup
+ExecStart=/usr/sbin/minimal-ec2-os-setup
+Type=oneshot
+
+[Install]
+WantedBy=ssh.service
