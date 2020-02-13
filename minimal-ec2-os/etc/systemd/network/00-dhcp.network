@@ -2,4 +2,4 @@
 Name=*
 
 [Network]
-DHCP=ipv4
+DHCP=yes

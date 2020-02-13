@@ -27,7 +27,7 @@ DISTRIBUTION := $(shell cat "DEBIAN/control" | awk '/^Distribution: / { print $$
 COMPONENT    := $(shell cat "DEBIAN/control" | awk '/^Component: / { print $$2 }')
 
 # Defaults if not specified in control
-DISTRIBUTION := $(or $(DISTRIBUTION),bionic)
+DISTRIBUTION := $(or $(DISTRIBUTION),focal)
 COMPONENT    := $(or $(COMPONENT),main)
 
 # Other variables
@@ -58,7 +58,7 @@ clean:
 	@rm -rf "$(DISTDIR)/$(PACKAGE)"
 
 # Clean up the built debian pacakge
-distclean: clean
+debclean: clean
 	@echo " ~~~ Removing \`$(BASEDIR)/$(DEB)' debian package"
 	@rm -f "$(BASEDIR)/$(DEB)"
 
@@ -77,7 +77,15 @@ ifeq ($(MAKELEVEL),0)
 
 %:
 	@for SUBDIR in $$(ls -1 */DEBIAN/control | cut -d/ -f1) ; do \
+		echo "\n >>> Making target \`$(@)' in \`$${SUBDIR}'" ; \
 		$(MAKE) --no-print-directory -f "$(realpath $(MAKEFILE_LIST))" -C "$${SUBDIR}" "$(@)" ; \
-	done
+	done ; echo
+
+distclean: debclean
+	@echo " >>> Cleaning \`$(DISTDIR)' build directory"
+	@rm -rf "$(DISTDIR)"
+
+rebuild: distclean all
+	@echo " >>> All packages rebuilt\n"
 
 endif

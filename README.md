@@ -43,7 +43,7 @@ We'll use `debootstrap` to bootstrap a `minbase` system into `/mnt`:
 ```
 apt-get install --yes debootstrap
 debootstrap --arch=amd64 --variant=minbase --exclude=makedev \
-  bionic /mnt http://${REGION}.ec2.archive.ubuntu.com/ubuntu/
+  focal /mnt http://${REGION}.ec2.archive.ubuntu.com/ubuntu/
 ```
 
 First we'll set up the `/etc/mtab` link and `/etc/fstab` file:
@@ -63,9 +63,9 @@ We then want to make sure we get our APT sources configured in our region:
 
 ```
 cat > "/mnt/etc/apt/sources.list" << EOF
-deb http://${REGION}.ec2.archive.ubuntu.com/ubuntu bionic main restricted universe multiverse
-deb http://${REGION}.ec2.archive.ubuntu.com/ubuntu bionic-updates main restricted universe multiverse
-deb http://security.ubuntu.com/ubuntu bionic-security main restricted universe multiverse
+deb http://${REGION}.ec2.archive.ubuntu.com/ubuntu focal main restricted universe multiverse
+deb http://${REGION}.ec2.archive.ubuntu.com/ubuntu focal-updates main restricted universe multiverse
+deb http://security.ubuntu.com/ubuntu focal-security main restricted universe multiverse
 EOF
 ```
 
@@ -74,12 +74,20 @@ At this point we can mount the various filesystems required by the installation:
 ```
 mount -t proc proc "/mnt/proc"
 mount -t sysfs sysfs "/mnt/sys"
+mount -o bind /run "/mnt/run"
 mount -o bind /dev "/mnt/dev"
 mount -o bind /dev/pts "/mnt/dev/pts"
 ```
 
 Finally let's download a copy of our `minimal-os` and `minimal-ec2-os` packages
-and place them into our target system:
+and place them into our target system. If you have them locally:
+
+```
+cp ~ubuntu/minimal-os_1.0.0_all.deb '/mnt/minimal-os.deb'
+cp ~ubuntu/minimal-ec2-os_1.0.0_all.deb '/mnt/minimal-ec2-os.deb'
+```
+
+Or download from GitHub:
 
 ```
 curl -L -o '/mnt/minimal-os.deb' \
@@ -115,7 +123,7 @@ apt-get $APT_OPTIONS update && \
 ```
 
 Then for sanity's sake, let's keep only the `minimal-ec2-os`, `minimal-os` and
-`linux-aws` packages marked as _automatically installed_ (this will help with
+`linux-aws` packages marked as _manually installed_ (this will help with
 `apt-get autoremove`):
 
 ```
@@ -145,14 +153,6 @@ sed -i -E \
   /etc/ssh/sshd_config
 ```
 
-Then let's disable the `getty` systemd target, as we don't really have
-a console from which people can log in:
-
-```
-systemctl mask "getty@tty1.service"
-systemctl mask "serial-getty@ttyS0.service"
-```
-
 Finally, let's make sure that the `minimal-ec2-os-setup` script runs upon
 the first boot:
 
@@ -177,6 +177,7 @@ of them will be re-created once `minimal-ec2-os-setup` runs the first time:
 rm -f /mnt/etc/hostname \
       /mnt/etc/hosts \
       /mnt/etc/ssh/ssh_host_*_key* \
+      /mnt/minimal-os.deb \
       /mnt/minimal-ec2-os.deb \
       /mnt/root/.bash_history
 ```
@@ -185,6 +186,11 @@ At this point we can simply unmount our volume:
 
 ```
 umount -Rlf /mnt
+```
+
+And clean out any unused block:
+```
+zerofree -v /dev/xvdf1
 ```
 
 Creating an AMI

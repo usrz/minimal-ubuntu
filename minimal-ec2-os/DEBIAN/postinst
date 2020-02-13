@@ -12,14 +12,7 @@ id ubuntu > /dev/null 2>&1 || {
 		 ubuntu
 }
 
-# Enable systemd-timesyncd, ensuring we have a proper user for it
-id systemd-timesync > /dev/null 2>&1 || {
-	adduser --system \
-		--home /run/systemd --no-create-home \
-		--shell $(grep systemd-network /etc/passwd | cut -d: -f7) \
-		--gecos 'systemd Time Synchronization' \
-		--group systemd-timesync
-}
+# Enable systemd-timesyncd using AWS's NTP server
 sed -i -E 's|^#?NTP=.*$|NTP=169.254.169.123|g' /etc/systemd/timesyncd.conf
 systemctl enable systemd-timesyncd
 
@@ -37,3 +30,7 @@ systemctl enable systemd-resolved
 
 # Enable syslog facilities
 systemctl enable rsyslog
+
+# Mask/disable TTYs on console and serial
+systemctl mask "getty@tty1.service"
+systemctl mask "serial-getty@ttyS0.service"
