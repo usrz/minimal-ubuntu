@@ -3,6 +3,6 @@ Architecture: all
 Version: 1.0.1
 Priority: optional
 Section: metapackages
-Depends: cloud-guest-utils, grub-pc | grub-efi-arm64, minimal-os
+Depends: cloud-guest-utils, fdisk, grub-pc | grub-efi-arm64, minimal-os
 Description: A minimal base package for Ubuntu on EC2
 Maintainer: Pier Fumagalli <pier@usrz.com>
