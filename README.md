@@ -1,7 +1,7 @@
 Creating a minimal Ubuntu AMI
 =============================
 
-[WIP: Now for Graviton, too (ARM64)](GRAVITON.md)
+[Now for Graviton (ARM64), too!](GRAVITON.md)
 
 Preparing the volume
 --------------------
@@ -17,23 +17,23 @@ create a basic layout as follows:
 
 ```
 apt-get install --yes parted
-parted -s /dev/xvdf mklabel msdos
-parted -s /dev/xvdf mkpart primary ext4 2048s 100%
-parted -s /dev/xvdf set 1 boot on
+parted -s /dev/nvme1n1 mklabel msdos
+parted -s /dev/nvme1n1 mkpart primary ext4 2048s 100%
+parted -s /dev/nvme1n1 set 1 boot on
 ```
 
 Take quick break, sometimes it takes a second or two for the kernel to populate
 the device tree... Then create our file system:
 
 ```
-mkfs.ext4 /dev/xvdf1
+mkfs.ext4 /dev/nvme1n1p1
 ```
 
 Otherwise your mileage will vary. Just make sure to `mount` your partition
 under `/mnt`:
 
 ```
-mount /dev/xvdf1 /mnt
+mount /dev/nvme1n1p1 /mnt
 ```
 
 Bootstrapping the system
@@ -199,7 +199,7 @@ And clean out any unused block:
 
 ```
 apt-get install zerofree
-zerofree -v /dev/xvdf1
+zerofree -v /dev/nvme1n1p1
 ```
 
 Creating an AMI
