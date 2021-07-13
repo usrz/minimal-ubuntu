@@ -20,7 +20,12 @@ parted -s /dev/nvme1n1 mkpart UEFI 1MiB 100MiB
 parted -s /dev/nvme1n1 mkpart ROOT 100MiB 100%
 parted -s /dev/nvme1n1 set 1 boot on
 parted -s /dev/nvme1n1 set 1 esp on
-sync
+```
+
+Take quick break, sometimes it takes a second or two for the kernel to populate
+the device tree... Then create our file systems:
+
+```
 mkfs.fat -F32 /dev/nvme1n1p1
 mkfs.ext4 /dev/nvme1n1p2
 ```

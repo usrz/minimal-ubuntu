@@ -20,7 +20,12 @@ apt-get install --yes parted
 parted -s /dev/xvdf mklabel msdos
 parted -s /dev/xvdf mkpart primary ext4 2048s 100%
 parted -s /dev/xvdf set 1 boot on
-sync
+```
+
+Take quick break, sometimes it takes a second or two for the kernel to populate
+the device tree... Then create our file system:
+
+```
 mkfs.ext4 /dev/xvdf1
 ```
 
