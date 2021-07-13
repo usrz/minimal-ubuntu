@@ -213,4 +213,4 @@ Going back to the EC2 console we can now detach the volume we created from the
 EC2 instance we used for setup, and create a snapshot from it.
 
 Once the snapshot is created, we can then create an image from it, using the
-`x86_64` architecture, and `Hardware-assisted` virtualization.
+`arm64` architecture, and `Hardware-assisted` virtualization.
