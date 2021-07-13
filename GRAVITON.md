@@ -47,7 +47,7 @@ We'll use `debootstrap` to bootstrap a `minbase` system into `/mnt`:
 
 ```
 apt-get install --yes debootstrap
-debootstrap --arch=arm64 --variant=minbase --exclude=makedev,fdisk \
+debootstrap --arch=arm64 --variant=minbase --exclude=makedev \
   focal /mnt http://${REGION}.clouds.ports.ubuntu.com/ubuntu-ports/
 ```
 
