@@ -196,7 +196,9 @@ umount -Rlf /mnt
 ```
 
 And clean out any unused block:
+
 ```
+apt-get install zerofree
 zerofree -v /dev/xvdf1
 ```
 

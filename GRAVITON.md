@@ -65,7 +65,7 @@ FMT="%-42s %-11s %-5s %-17s %-5s %s"
 cat > "/mnt/etc/fstab" << EOF
 $(printf "${FMT}" "# DEVICE UUID" "MOUNTPOINT" "TYPE" "OPTIONS" "DUMP" "FSCK")
 $(findmnt -no SOURCE /mnt | xargs blkid -o export | awk -v FMT="${FMT}" '/^UUID=/ { printf(FMT, $0, "/", "ext4", "defaults,discard", "0", "1" ) }')
-$(findmnt -no SOURCE /mnt/boot/efi | xargs blkid -o export | awk -v FMT="${FMT}" '/^UUID=/ { printf(FMT, $0, "/", "vfat", "umask=0077", "0", "1" ) }')
+$(findmnt -no SOURCE /mnt/boot/efi | xargs blkid -o export | awk -v FMT="${FMT}" '/^UUID=/ { printf(FMT, $0, "/boot/efi", "vfat", "umask=0077", "0", "1" ) }')
 EOF
 unset FMT
 ```
@@ -200,7 +200,9 @@ umount -Rlf /mnt
 ```
 
 And clean out any unused block:
+
 ```
+apt-get install zerofree
 zerofree -v /dev/nvme1n1p2
 ```
 
