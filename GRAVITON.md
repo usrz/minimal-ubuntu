@@ -1,7 +1,5 @@
-Creating a minimal Ubuntu AMI
-=============================
-
-[WIP: Now for Graviton, too (ARM64)](GRAVITON.md)
+Creating a minimal Ubuntu AMI (Graviton Edition)
+================================================
 
 Preparing the volume
 --------------------
@@ -9,26 +7,31 @@ Preparing the volume
 From the EC2 console, create a new volume (2GiB should suffice) and attach it
 to a running EC2 instance where we can run the installation process.
 
-We want to create a single (bootable) partition on the disk encompassing the
-entire volume formatted as `ext4`.
+We want to create two partitions on the disk: a small (100 MiB) FAT32 partition
+for the UEFI BOOT, and the rest of the as an EXT4 volume.
 
 If you have `parted` installed (or just copy-and-paste below), you can simply
 create a basic layout as follows:
 
 ```
 apt-get install --yes parted
-parted -s /dev/xvdf mklabel msdos
-parted -s /dev/xvdf mkpart primary ext4 2048s 100%
-parted -s /dev/xvdf set 1 boot on
+parted -s /dev/nvme1n1 mklabel gpt
+parted -s /dev/nvme1n1 mkpart UEFI 1MiB 100MiB
+parted -s /dev/nvme1n1 mkpart ROOT 100MiB 100%
+parted -s /dev/nvme1n1 set 1 boot on
+parted -s /dev/nvme1n1 set 1 esp on
 sync
-mkfs.ext4 /dev/xvdf1
+mkfs.fat -F32 /dev/nvme1n1p1
+mkfs.ext4 /dev/nvme1n1p2
 ```
 
-Otherwise your mileage will vary. Just make sure to `mount` your partition
-under `/mnt`:
+Otherwise your mileage will vary. Just make sure to `mount` your partitions
+under `/mnt` and `/mnt/boot/efi`:
 
 ```
-mount /dev/xvdf1 /mnt
+mount /dev/nvme1n1p2 /mnt
+mkdir -p /mnt/boot/efi
+mount /dev/nvme1n1p1 /mnt/boot/efi
 ```
 
 Bootstrapping the system
@@ -44,8 +47,8 @@ We'll use `debootstrap` to bootstrap a `minbase` system into `/mnt`:
 
 ```
 apt-get install --yes debootstrap
-debootstrap --arch=amd64 --variant=minbase --exclude=makedev \
-  focal /mnt http://${REGION}.ec2.archive.ubuntu.com/ubuntu/
+debootstrap --arch=arm64 --variant=minbase --exclude=makedev,fdisk \
+  focal /mnt http://${REGION}.clouds.ports.ubuntu.com/ubuntu-ports/
 ```
 
 First we'll set up the `/etc/mtab` link and `/etc/fstab` file:
@@ -53,10 +56,11 @@ First we'll set up the `/etc/mtab` link and `/etc/fstab` file:
 ```
 ln -sf /proc/self/mounts /mnt/etc/mtab
 
-FMT="%-42s %-11s %-5s %-9s %-5s %s"
+FMT="%-42s %-11s %-5s %-17s %-5s %s"
 cat > "/mnt/etc/fstab" << EOF
 $(printf "${FMT}" "# DEVICE UUID" "MOUNTPOINT" "TYPE" "OPTIONS" "DUMP" "FSCK")
-$(findmnt -no SOURCE /mnt | xargs blkid -o export | awk -v FMT="${FMT}" '/^UUID=/ { printf(FMT, $0, "/", "ext4", "defaults", "0", "1" ) }')
+$(findmnt -no SOURCE /mnt | xargs blkid -o export | awk -v FMT="${FMT}" '/^UUID=/ { printf(FMT, $0, "/", "ext4", "defaults,discard", "0", "1" ) }')
+$(findmnt -no SOURCE /mnt/boot/efi | xargs blkid -o export | awk -v FMT="${FMT}" '/^UUID=/ { printf(FMT, $0, "/", "vfat", "umask=0077", "0", "1" ) }')
 EOF
 unset FMT
 ```
@@ -65,9 +69,9 @@ We then want to make sure we get our APT sources configured in our region:
 
 ```
 cat > "/mnt/etc/apt/sources.list" << EOF
-deb http://${REGION}.ec2.archive.ubuntu.com/ubuntu focal main restricted universe multiverse
-deb http://${REGION}.ec2.archive.ubuntu.com/ubuntu focal-updates main restricted universe multiverse
-deb http://security.ubuntu.com/ubuntu focal-security main restricted universe multiverse
+deb http://${REGION}.clouds.ports.ubuntu.com/ubuntu-ports focal main restricted universe multiverse
+deb http://${REGION}.clouds.ports.ubuntu.com/ubuntu-ports focal-updates main restricted universe multiverse
+deb http://ports.ubuntu.com/ubuntu-ports focal-security main restricted universe multiverse
 EOF
 ```
 
@@ -192,7 +196,7 @@ umount -Rlf /mnt
 
 And clean out any unused block:
 ```
-zerofree -v /dev/xvdf1
+zerofree -v /dev/nvme1n1p2
 ```
 
 Creating an AMI
