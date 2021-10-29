@@ -28,9 +28,6 @@ ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf
 systemctl enable systemd-networkd
 systemctl enable systemd-resolved
 
-# Enable syslog facilities
-systemctl enable rsyslog
-
 # Mask/disable TTYs on console and serial
 systemctl mask "getty@tty1.service"
 systemctl mask "serial-getty@ttyS0.service"

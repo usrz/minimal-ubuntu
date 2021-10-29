@@ -1,6 +1,6 @@
 Package: minimal-os
 Architecture: all
-Version: 1.0.1
+Version: 1.0.2
 Priority: optional
 Section: metapackages
 Maintainer: Pier Fumagalli <pier@usrz.com>
@@ -22,7 +22,6 @@ Depends: apt-utils,
          man-db,
          net-tools,
          openssh-server,
-         rsyslog,
          sudo,
          systemd,
          systemd-sysv,

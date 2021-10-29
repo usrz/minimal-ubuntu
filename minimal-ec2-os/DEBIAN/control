@@ -1,6 +1,6 @@
 Package: minimal-ec2-os
 Architecture: all
-Version: 1.0.1
+Version: 1.0.2
 Priority: optional
 Section: metapackages
 Depends: cloud-guest-utils, fdisk, grub-pc | grub-efi-arm64, minimal-os
