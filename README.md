@@ -90,17 +90,17 @@ Finally let's download a copy of our `minimal-os` and `minimal-ec2-os` packages
 and place them into our target system. If you have them locally:
 
 ```
-cp ~ubuntu/minimal-os_1.0.2_all.deb '/mnt/minimal-os.deb'
-cp ~ubuntu/minimal-ec2-os_1.0.2_all.deb '/mnt/minimal-ec2-os.deb'
+cp ~ubuntu/minimal-os_1.0.3_all.deb '/mnt/minimal-os.deb'
+cp ~ubuntu/minimal-ec2-os_1.0.3_all.deb '/mnt/minimal-ec2-os.deb'
 ```
 
 Or download from GitHub:
 
 ```
 curl -L -o '/mnt/minimal-os.deb' \
-  'https://github.com/usrz/minimal-ubuntu/releases/download/v1.0.2/minimal-os_1.0.2_all.deb'
+  'https://github.com/usrz/minimal-ubuntu/releases/download/v1.0.3/minimal-os_1.0.3_all.deb'
 curl -L -o '/mnt/minimal-ec2-os.deb' \
-  'https://github.com/usrz/minimal-ubuntu/releases/download/v1.0.2/minimal-ec2-os_1.0.2_all.deb'
+  'https://github.com/usrz/minimal-ubuntu/releases/download/v1.0.3/minimal-ec2-os_1.0.3_all.deb'
 ```
 
 Minimal installation
