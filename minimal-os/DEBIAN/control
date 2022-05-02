@@ -1,6 +1,6 @@
 Package: minimal-os
 Architecture: all
-Version: 1.0.3
+Version: 1.0.4
 Priority: optional
 Section: metapackages
 Maintainer: Pier Fumagalli <pier@usrz.com>
@@ -24,6 +24,7 @@ Depends: apt-utils,
          openssh-server,
          sudo,
          systemd,
+         systemd-timesyncd,
          systemd-sysv,
          vim,
          whiptail

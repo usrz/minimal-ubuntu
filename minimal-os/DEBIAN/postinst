@@ -7,9 +7,9 @@ grep -q '^LANGUAGE' '/etc/default/locale' || {
 	/usr/sbin/update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 LANGUAGE=en_US
 }
 
-# Add the 'systemd-timesync' user if not already there
-id systemd-timesync > /dev/null 2>&1 || {
-	echo 'Adding "systemd-timesync" system user'
-	adduser --system --group --no-create-home --home /run/systemd/timesync \
-		--gecos "systemd Timesync" systemd-timesync
+# Disable "bracketed paste"
+grep -q 'enable-bracketed-paste' '/etc/inputrc' || {
+	echo '' >> '/etc/inputrc'
+	echo '# Disable "bracketed paste"' >> '/etc/inputrc'
+	echo 'set enable-bracketed-paste off' >> '/etc/inputrc'
 }
