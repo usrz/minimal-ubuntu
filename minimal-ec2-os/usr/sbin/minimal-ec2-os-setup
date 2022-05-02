@@ -23,21 +23,30 @@ lsblk -no NAME,PKNAME "$(findmnt -no SOURCE /)" | {
 
 # Check for proper /etc/hostname and /etc/hosts
 test -f /etc/hostname -a -f /etc/hosts || {
-	HOSTNAME_FULL="$(curl -s "http://169.254.169.254/latest/meta-data/hostname")"
-	HOSTNAME_SHORT="$(echo "${HOSTNAME_FULL}" | cut -d. -f1)"
+	# Priority goes to the "Name" tag, otherwise to the default EC2 hostname
+	HOSTNAME_FULL="$(curl -fs "http://169.254.169.254/latest/meta-data/tags/instance/Name")"
+	if test -z "${HOSTNAME_FULL}" ; then
+		HOSTNAME_FULL="$(curl -s "http://169.254.169.254/latest/meta-data/hostname")"
+	fi
 
+	# Convert full host name to a short (sans domain, valid characters) host name
+	HOSTNAME_SHORT="$(echo "${HOSTNAME_FULL}" | tr -dc '[:alnum:]-. ' | tr '[:upper:] ' '[:lower:]-' | cut -d. -f1)"
+
+	# Remember this host name in this session
 	hostname "${HOSTNAME_SHORT}"
 
+	# Create the "/etc/hostname" file
 	test -f /etc/hostname || {
 		echo "* Generating /etc/hostname"
 		echo "${HOSTNAME_SHORT}" > /etc/hostname
 	}
 
+	# Create the "/etc/hosts" file
 	test -f /etc/hosts || {
 		echo "* Generating /etc/hosts"
 		cat > /etc/hosts <<- EOF
 		127.0.0.1	localhost
-		127.0.1.1	${HOSTNAME_FULL}	${HOSTNAME_SHORT}
+		127.0.1.1	${HOSTNAME_SHORT}
 		EOF
 	}
 }
