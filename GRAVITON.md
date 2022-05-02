@@ -1,5 +1,16 @@
-Creating a minimal Ubuntu AMI (Graviton Edition)
-================================================
+Creating a minimal Ubuntu AMI
+=============================
+
+Required packages
+-----------------
+
+To follow this document, we'll need few packages installed, namely `parted`
+to partition volumes, `debootstrap` to install the base system, and `zerofree`
+to clean up the volume prior to snapshotting:
+
+```
+apt-get update && apt-get install --yes parted debootstrap zerofree
+```
 
 Preparing the volume
 --------------------
@@ -10,11 +21,9 @@ to a running EC2 instance where we can run the installation process.
 We want to create two partitions on the disk: a small (100 MiB) FAT32 partition
 for the UEFI BOOT, and the rest of the as an EXT4 volume.
 
-If you have `parted` installed (or just copy-and-paste below), you can simply
-create a basic layout as follows:
+Use `parted` to simply create a basic layout as follows:
 
 ```
-apt-get install --yes parted
 parted -s /dev/nvme1n1 mklabel gpt
 parted -s /dev/nvme1n1 mkpart UEFI 1MiB 100MiB
 parted -s /dev/nvme1n1 mkpart ROOT 100MiB 100%
@@ -30,8 +39,7 @@ mkfs.fat -F32 /dev/nvme1n1p1
 mkfs.ext4 /dev/nvme1n1p2
 ```
 
-Otherwise your mileage will vary. Just make sure to `mount` your partitions
-under `/mnt` and `/mnt/boot/efi`:
+Then `mount` your partitions under `/mnt` and `/mnt/boot/efi`:
 
 ```
 mount /dev/nvme1n1p2 /mnt
@@ -50,13 +58,21 @@ REGION="$(curl --silent http://169.254.169.254/latest/meta-data/placement/region
 
 We'll use `debootstrap` to bootstrap a `minbase` system into `/mnt`:
 
+For **Graviton** (`arm64`) use:
+
 ```
-apt-get install --yes debootstrap
 debootstrap --arch=arm64 --variant=minbase --include=systemd \
   jammy /mnt http://${REGION}.clouds.ports.ubuntu.com/ubuntu-ports/
 ```
 
-First we'll set up the `/etc/mtab` link and `/etc/fstab` file:
+On the other hand for **Intel/AMD** (`x86_64`) use:
+
+```
+debootstrap --arch=amd64 --variant=minbase --include=systemd \
+  jammy /mnt http://${REGION}.ec2.archive.ubuntu.com/ubuntu/
+```
+
+Then we'll set up the `/etc/mtab` link and `/etc/fstab` file:
 
 ```
 ln -sf /proc/self/mounts /mnt/etc/mtab
@@ -67,16 +83,27 @@ $(printf "${FMT}" "# DEVICE UUID" "MOUNTPOINT" "TYPE" "OPTIONS" "DUMP" "FSCK")
 $(findmnt -no SOURCE /mnt | xargs blkid -o export | awk -v FMT="${FMT}" '/^UUID=/ { printf(FMT, $0, "/", "ext4", "defaults,discard", "0", "1" ) }')
 $(findmnt -no SOURCE /mnt/boot/efi | xargs blkid -o export | awk -v FMT="${FMT}" '/^UUID=/ { printf(FMT, $0, "/boot/efi", "vfat", "umask=0077", "0", "1" ) }')
 EOF
-unset FMT
 ```
 
-We then want to make sure we get our APT sources configured in our region:
+We then want to make sure we get our APT sources configured in our region.
+
+For **Graviton** (`arm64`) use:
 
 ```
 cat > "/mnt/etc/apt/sources.list" << EOF
 deb http://${REGION}.clouds.ports.ubuntu.com/ubuntu-ports jammy main restricted universe multiverse
 deb http://${REGION}.clouds.ports.ubuntu.com/ubuntu-ports jammy-updates main restricted universe multiverse
 deb http://ports.ubuntu.com/ubuntu-ports jammy-security main restricted universe multiverse
+EOF
+```
+
+On the other hand for **Intel/AMD** (`x86_64`) use:
+
+```
+cat > "/mnt/etc/apt/sources.list" << EOF
+deb http://${REGION}.ec2.archive.ubuntu.com/ubuntu jammy main restricted universe multiverse
+deb http://${REGION}.ec2.archive.ubuntu.com/ubuntu jammy-updates main restricted universe multiverse
+deb http://security.ubuntu.com/ubuntu jammy-security main restricted universe multiverse
 EOF
 ```
 
@@ -141,10 +168,16 @@ apt-mark showmanual | xargs apt-mark auto
 apt-mark manual minimal-ec2-os minimal-os linux-aws
 ```
 
-We continue by installing the GRUB boot loader:
+We continue by installing the GRUB boot loader, for **Graviton** (`arm64`):
 
 ```
-grub-install "/dev/$(findmnt -no SOURCE / | xargs lsblk -no pkname)" && update-grub
+grub-install --target=arm64-efi "/dev/$(findmnt -no SOURCE / | xargs lsblk -no pkname)" && update-grub
+```
+
+And for **Intel/AMD** (`x86_64`):
+
+```
+grub-install --target=x86_64-efi "/dev/$(findmnt -no SOURCE / | xargs lsblk -no pkname)" && update-grub
 ```
 
 We then want to restrict SSH to forbid password-based logins:
@@ -161,7 +194,6 @@ the first boot:
 ```
 sed -i 's|^RUN_SETUP=.*$|RUN_SETUP=true|g' /etc/default/minimal-ec2-os-setup
 ```
-
 
 Cleaning up
 -----------
@@ -193,7 +225,6 @@ umount -Rlf /mnt
 And clean out any unused block:
 
 ```
-apt-get install zerofree
 zerofree -v /dev/nvme1n1p2
 ```
 
@@ -203,5 +234,12 @@ Creating an AMI
 Going back to the EC2 console we can now detach the volume we created from the
 EC2 instance we used for setup, and create a snapshot from it.
 
-Once the snapshot is created, we can then create an image from it, using the
-`arm64` architecture, and `Hardware-assisted` virtualization.
+Once the snapshot is created, we can then create an image from it (remember,
+select the snapshot then _Actions -> Create image from snapshot_, it is **not**
+in the _AMI_ section of the console).
+
+Remember to select the following:
+* _Architecture_: either `arm64` or `x86_64`
+* _Root device name_: always `/dev/sda1`
+* _Virtualization type_: always `Hardware-assisted virtualization`
+* _Boot mode_: always `UEFI`
