@@ -45,15 +45,15 @@ Bootstrapping the system
 First let's get our region:
 
 ```
-REGION="$(curl --silent http://169.254.169.254/latest/meta-data/placement/availability-zone | sed -E 's|[a-z]+$||g')"
+REGION="$(curl --silent http://169.254.169.254/latest/meta-data/placement/region)"
 ```
 
 We'll use `debootstrap` to bootstrap a `minbase` system into `/mnt`:
 
 ```
 apt-get install --yes debootstrap
-debootstrap --arch=arm64 --variant=minbase --exclude=makedev \
-  focal /mnt http://${REGION}.clouds.ports.ubuntu.com/ubuntu-ports/
+debootstrap --arch=arm64 --variant=minbase --include=systemd \
+  jammy /mnt http://${REGION}.clouds.ports.ubuntu.com/ubuntu-ports/
 ```
 
 First we'll set up the `/etc/mtab` link and `/etc/fstab` file:
@@ -74,9 +74,9 @@ We then want to make sure we get our APT sources configured in our region:
 
 ```
 cat > "/mnt/etc/apt/sources.list" << EOF
-deb http://${REGION}.clouds.ports.ubuntu.com/ubuntu-ports focal main restricted universe multiverse
-deb http://${REGION}.clouds.ports.ubuntu.com/ubuntu-ports focal-updates main restricted universe multiverse
-deb http://ports.ubuntu.com/ubuntu-ports focal-security main restricted universe multiverse
+deb http://${REGION}.clouds.ports.ubuntu.com/ubuntu-ports jammy main restricted universe multiverse
+deb http://${REGION}.clouds.ports.ubuntu.com/ubuntu-ports jammy-updates main restricted universe multiverse
+deb http://ports.ubuntu.com/ubuntu-ports jammy-security main restricted universe multiverse
 EOF
 ```
 
@@ -94,17 +94,17 @@ Finally let's download a copy of our `minimal-os` and `minimal-ec2-os` packages
 and place them into our target system. If you have them locally:
 
 ```
-cp ~ubuntu/minimal-os_1.0.3_all.deb '/mnt/minimal-os.deb'
-cp ~ubuntu/minimal-ec2-os_1.0.3_all.deb '/mnt/minimal-ec2-os.deb'
+cp ~ubuntu/minimal-os_1.0.4_all.deb '/mnt/minimal-os.deb'
+cp ~ubuntu/minimal-ec2-os_1.0.4_all.deb '/mnt/minimal-ec2-os.deb'
 ```
 
 Or download from GitHub:
 
 ```
 curl -L -o '/mnt/minimal-os.deb' \
-  'https://github.com/usrz/minimal-ubuntu/releases/download/v1.0.3/minimal-os_1.0.3_all.deb'
+  'https://github.com/usrz/minimal-ubuntu/releases/download/v1.0.4/minimal-os_1.0.4_all.deb'
 curl -L -o '/mnt/minimal-ec2-os.deb' \
-  'https://github.com/usrz/minimal-ubuntu/releases/download/v1.0.3/minimal-ec2-os_1.0.3_all.deb'
+  'https://github.com/usrz/minimal-ubuntu/releases/download/v1.0.4/minimal-ec2-os_1.0.4_all.deb'
 ```
 
 Minimal installation
@@ -118,8 +118,7 @@ eval $(LANG=C LC_ALL=C LANGUAGE=C locale) chroot "/mnt" /bin/bash --login
 ```
 
 We then want to update the system, and install all packages required for a
-minimal system (note that I don't know why `makedev` gets isntalled by
-`debootstrap`, even when `--exclude=...` is specified):
+minimal system:
 
 ```
 export DEBIAN_FRONTEND=noninteractive
@@ -142,13 +141,6 @@ apt-mark showmanual | xargs apt-mark auto
 apt-mark manual minimal-ec2-os minimal-os linux-aws
 ```
 
-Then we need to create create our `en_US.UTF8` locale and set it as our default:
-
-```
-locale-gen en_US.UTF-8
-update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 LANGUAGE=en_US
-```
-
 We continue by installing the GRUB boot loader:
 
 ```
@@ -160,7 +152,6 @@ We then want to restrict SSH to forbid password-based logins:
 ```
 sed -i -E \
   -e 's/^#?\s*PasswordAuthentication\s+(yes|no)\s*$/PasswordAuthentication no/g' \
-  -e 's/^#?\s*ChallengeResponseAuthentication\s+(yes|no)\s*$/ChallengeResponseAuthentication no/g' \
   /etc/ssh/sshd_config
 ```
 
