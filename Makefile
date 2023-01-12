@@ -3,19 +3,14 @@
 # ============================================================================ #
 
 .DEFAULT_GOAL := all
-.PHONY        := all clean distclean publish
+.PHONY        := all deb
 
 BASEDIR       ?= $(realpath .)
-DISTDIR       ?= $(BASEDIR)/dist
-BUILD         ?= $(if $(CIRCLE_BUILD_NUM),-circle$(CIRCLE_BUILD_NUM))
 
-export BASEDIR DISTDIR BUILD
+export BASEDIR
 
 # ============================================================================ #
-# SUBDIR MAKEFILE                                                              #
-#                                                                              #
-# Simply copy the source tree into "./dist", update the package control file,  #
-# then build and/or upload our package                                         #
+# SUBDIR MAKEFILE: build package in directory                                  #
 # ============================================================================ #
 ifeq ($(MAKELEVEL),1)
 
@@ -26,66 +21,28 @@ ARCHITECTURE := $(shell cat "DEBIAN/control" | awk '/^Architecture: / { print $$
 DISTRIBUTION := $(shell cat "DEBIAN/control" | awk '/^Distribution: / { print $$2 }')
 COMPONENT    := $(shell cat "DEBIAN/control" | awk '/^Component: / { print $$2 }')
 
-# Defaults if not specified in control
-DISTRIBUTION := $(or $(DISTRIBUTION),focal)
-COMPONENT    := $(or $(COMPONENT),main)
-
-# Other variables
-DEB          := $(PACKAGE)_$(VERSION)$(BUILD)_$(ARCHITECTURE).deb
-
-# Copy all the package contents and update the "control" file
-$(DISTDIR)/$(PACKAGE):
-	@echo " ~~~ Preparing \`$(@)' directory structure"
-	@mkdir -p "$(@)"
-	@echo " ~~~ Copying \`$(realpath .)' directory contents"
-	@cp -R "." "$(@)/."
-	@echo " ~~~ Updating \`$(@)/DEBIAN/control' debian control file"
-	@sed -E -i.bak \
-		-e 's|(^Version: .*)|&$(BUILD)|g' \
-		-e '/^Distribution: /d' \
-		-e '/^Component: /d' \
-		"$(@)/DEBIAN/control"
-	@rm -f "$(@)/DEBIAN/control.bak"
+# Our "package.deb" file name
+DEB_NAME     := $(PACKAGE)_$(VERSION)$(BUILD)_$(ARCHITECTURE).deb
+DEB_FILE     := $(BASEDIR)/$(DEB_NAME)
 
 # Build the debian package with the correct naming structure
-$(BASEDIR)/$(DEB): $(DISTDIR)/$(PACKAGE)
-	@echo " ~~~ Building \`$(@)' package (version $(VERSION)$(BUILD))"
-	@dpkg-deb -b --root-owner-group "$(DISTDIR)/$(PACKAGE)" "$(@)" > /dev/null
-
-# Clean up the "./dist/{package_name}" directory
-clean:
-	@echo " ~~~ Cleaning \`$(DISTDIR)/$(PACKAGE)' build directory"
-	@rm -rf "$(DISTDIR)/$(PACKAGE)"
-
-# Clean up the built debian pacakge
-debclean: clean
-	@echo " ~~~ Removing \`$(BASEDIR)/$(DEB)' debian package"
-	@rm -f "$(BASEDIR)/$(DEB)"
-
-
-# Build the debian package based on variables
-all: $(BASEDIR)/$(DEB)
+deb:
+	@echo "Building \`$(DEB_NAME)' package (version $(VERSION))"
+	@dpkg-deb --root-owner-group --build . "$(DEB_FILE)" > /dev/null
 
 endif
 
 # ============================================================================ #
-# MAIN MAKEFILE                                                                #
-#                                                                              #
-# Define our sub-directories to build from and invoke recursively              #
+# MAIN MAKEFILE: find subdirectories and invoke recursively                    #
 # ============================================================================ #
 ifeq ($(MAKELEVEL),0)
 
-%:
+all:
 	@for SUBDIR in $$(ls -1 */DEBIAN/control | cut -d/ -f1) ; do \
-		echo "\n >>> Making target \`$(@)' in \`$${SUBDIR}'" ; \
-		$(MAKE) --no-print-directory -f "$(realpath $(MAKEFILE_LIST))" -C "$${SUBDIR}" "$(@)" ; \
-	done ; echo
+		$(MAKE) -f "$(realpath $(MAKEFILE_LIST))" -C "$${SUBDIR}" "deb" ; \
+	done
 
-distclean: debclean
-	@echo " >>> Cleaning \`$(DISTDIR)' build directory"
-	@rm -rf "$(DISTDIR)"
-
-rebuild: distclean all
-	@echo " >>> All packages rebuilt\n"
+clean:
+	rm -f *.deb
 
 endif
