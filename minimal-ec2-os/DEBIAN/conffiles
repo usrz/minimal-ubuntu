@@ -1,3 +1,2 @@
 /etc/default/grub
 /etc/default/minimal-ec2-os-setup
-/etc/sudoers.d/00-minimal-ec2-os

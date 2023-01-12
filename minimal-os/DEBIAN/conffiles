@@ -1,4 +1,5 @@
 /etc/apt/apt.conf.d/99-minimal
+/etc/sudoers.d/00-minimal-os
 /etc/systemd/network/00-loopback.network
 /etc/systemd/network/50-docker-bridge.network
 /etc/systemd/network/50-docker-veth.network
