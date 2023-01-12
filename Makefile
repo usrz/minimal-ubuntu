@@ -27,7 +27,7 @@ DEB_FILE     := $(BASEDIR)/$(DEB_NAME)
 
 # Build the debian package with the correct naming structure
 deb:
-	@echo "Building \`$(DEB_NAME)' package (version $(VERSION))"
+	@echo "Building '$(DEB_NAME)' package (version $(VERSION))"
 	@dpkg-deb --root-owner-group --build . "$(DEB_FILE)" > /dev/null
 
 endif
@@ -43,6 +43,7 @@ all:
 	done
 
 clean:
-	rm -f *.deb
+	@echo "Cleaning up '*.deb' packages"
+	@rm -f *.deb
 
 endif
