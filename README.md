@@ -1,115 +1,276 @@
-Creating a minimal Ubuntu AMI
-=============================
+Minimal Ubuntu
+==============
+
+* [Required packages](#required-packages)
+* [Preparing the volume](#preparing-the-volume)
+  * [Normal volume](#normal-volume)
+  * [Disk image](#disk-image)
+  * [EC2 volume](#ec2-volume)
+* [Partitioning the volume](#partitioning-the-volume)
+  * [GPT and UEFI](#gpt-and-uefi)
+  * [MSDOS (for Raspberry Pi)](#msdos-for-raspberry-pi)
+* [Formatting and mounting](#formatting-and-mounting)
+  * [Mounting boot partition for UEFI systems](#mounting-boot-partition-for-uefi-systems)
+  * [Mounting boot partition for Raspberry Pi](#mounting-boot-partition-for-raspberry-pi)
+* [Architecture and repository URL](#architecture-and-repository-url)
+  * [Ubuntu repository for ARM64 systems](#ubuntu-repository-for-arm64-systems)
+  * [Ubuntu repository for X86_64 systems](#ubuntu-repository-for-x86_64-systems)
+  * [AWS Repositories](#aws-repositories)
+* [Bootstrapping the system](#bootstrapping-the-system)
+* [Minimal OS packages](#minimal-os-packages) _(TODO)_
+* [Operating system installation](#operating-system-installation)
+* [Kernel and helper packages](#kernel-and-helper-packages)
+  * [AWS EC2 kernel](#aws-ec2-kernel)
+  * [Raspberry Pi kernel](#raspberry-pi-kernel)
+  * [Other systems](#other-systems)
+* [Cleaning up](#cleaning-up)
 
 Required packages
------------------
+=================
 
 To follow this document, we'll need few packages installed, namely `parted`
 to partition volumes, `debootstrap` to install the base system, and `zerofree`
-to clean up the volume prior to snapshotting:
+to clean up the volume prior to snapshotting / imaging:
 
-```
+```shell
 apt-get update && apt-get install --yes parted debootstrap zerofree
 ```
 
-Preparing the volume
---------------------
 
-From the EC2 console, create a new volume (2GiB should suffice) and attach it
+
+Preparing the volume
+====================
+
+Regardless of what kind of system you're trying to install, we'll need an empty
+volume to start the initial installation process.
+
+Ultimately, the root volume's device needs to be set as the `BASE_DEV`
+environment variable.
+
+
+### Normal volume
+
+If targeting a normal device we can simply export the `BASE_DEV` environment
+variable directly:
+
+```shell
+# Simply export the root device upon which we want to install the OS
+export BASE_DEV=/dev/sdb
+```
+
+
+### Disk image
+
+If we want to create an image to be later written to an SD card or USB stick,
+(think _Raspberry Pi_) we need to first create the image file:
+
+```shell
+# Create a simple image file, 4Gb will suffice for this install
+dd if="/dev/zero" of="/raspberry-os.img" bs=4M count=1024 conv=fsync status=progress
+```
+
+Then we can use the loopback interface to use the image as a normal disk:
+
+```shell
+# Find our first available "loopback" device and use it as our BASE_DEV
+BASE_DEV="$(losetup -f)"
+
+# Associate our image file with the loopback device
+losetup -P "${BASE_DEV}" "/raspberry-os.img"
+```
+
+
+### EC2 Volume
+
+From the EC2 console, create a new volume (4GiB should suffice) and attach it
 to a running EC2 instance where we can run the installation process.
 
-We want to create two partitions on the disk: a small (100 MiB) FAT32 partition
-for the UEFI BOOT, and the rest of the as an EXT4 volume.
+Your mileage might vary, but simply export the device name (in most cases
+`/dev/nvme1n1`) as the `BASE_DEV` environment variable.
 
-Use `parted` to simply create a basic layout as follows:
+```shell
+# Simply export the root device upon which we want to install the OS
+export BASE_DEV=/dev/nvme1n1
+```
 
+
+
+Partitioning the volume
+=======================
+
+We want to create two partitions on the disk: a small (256 MiB) FAT32 partition
+for boot, and the rest of the as our EXT4 root volume.
+
+We can use `parted` to simply create a basic partition layout.
+
+
+### GPT and UEFI
+
+```shell
+# Create the GPT partition table
+parted -s "${BASE_DEV}" mklabel gpt
+
+# Create our two BOOT and ROOT partitions
+parted -s "${BASE_DEV}" mkpart UEFI 1MiB 256MiB
+parted -s "${BASE_DEV}" mkpart ROOT 256MiB 100%
+
+# Setup flags on our UEFI partition
+parted -s "${BASE_DEV}" set 1 boot on
+parted -s "${BASE_DEV}" set 1 esp on
 ```
-parted -s /dev/nvme1n1 mklabel gpt
-parted -s /dev/nvme1n1 mkpart UEFI 1MiB 100MiB
-parted -s /dev/nvme1n1 mkpart ROOT 100MiB 100%
-parted -s /dev/nvme1n1 set 1 boot on
-parted -s /dev/nvme1n1 set 1 esp on
+
+
+### MSDOS (for Raspberry Pi)
+
+```shell
+# Create the MSDOS partition table
+parted -s "${BASE_DEV}" mklabel msdos
+
+# Create our two BOOT and ROOT partitions
+parted -s "${BASE_DEV}" mkpart primary fat32 1MiB 256MiB
+parted -s "${BASE_DEV}" mkpart primary ext4 256MiB 100%
+
+# Set the boot partition as bootable
+parted -s "${BASE_DEV}" set 1 boot on
 ```
+
+
+
+Formatting and mounting
+=======================
 
 Take quick break, sometimes it takes a second or two for the kernel to populate
-the device tree... Then create our file systems:
+the device tree... Then let's figure out the partitions UUIDs and devices:
 
-```
-mkfs.fat -F32 /dev/nvme1n1p1
-mkfs.ext4 /dev/nvme1n1p2
+```shell
+# Find the UUID and device of the boot partition
+export BOOT_UUID="$(partx -go UUID -n 1 "${BASE_DEV}")"
+export BOOT_DEV="$(realpath /dev/disk/by-partuuid/"${BOOT_UUID}")"
+
+# Find the UUID and device of the root partition
+export ROOT_UUID="$(partx -go UUID -n 2 "${BASE_DEV}")"
+export ROOT_DEV="$(realpath /dev/disk/by-partuuid/"${ROOT_UUID}")"
 ```
 
-Then `mount` your partitions under `/mnt` and `/mnt/boot/efi`:
+Then create our file systems:
 
+```shell
+mkfs.fat -F32 "${BOOT_DEV}"
+mkfs.ext4 -F "${ROOT_DEV}"
 ```
-mount /dev/nvme1n1p2 /mnt
+
+Then let's mount our root partition under `mnt`:
+
+```shell
+mount "${ROOT_DEV}" /mnt
+```
+
+
+### Mounting boot partition for UEFI systems
+
+For UEFI systems, the boot partition will be mounted under `/mnt/boot/efi`:
+
+```shell
 mkdir -p /mnt/boot/efi
-mount /dev/nvme1n1p1 /mnt/boot/efi
+mount  "${BOOT_DEV}" /mnt/boot/efi
 ```
+
+
+### Mounting boot partition for Raspberry Pi
+
+For the Raspberry Pi, on the other hand, the mountpoints is `/mnt/boot/rpi`:
+
+```shell
+mkdir -p /mnt/boot/rpi
+mount  "${BOOT_DEV}" /mnt/boot/rpi
+```
+
+
+
+Architecture and repository URL
+===============================
+
+To bootstrap the system, we need to find the correct URL of the Ubuntu
+repository we want to fetch our packages from, and the architecture of the
+system we are trying to install.
+
+We export this into the `REPO_URL` and `TARGET_ARCH` environment variables.
+
+Remember, Raspberry Pis, AWS Graviton instances, M1/M2 Macs are ARM64!
+
+### Ubuntu repository for ARM64 systems
+
+```shell
+export REPO_URL="http://ports.ubuntu.com/ubuntu-ports"
+export TARGET_ARCH="arm64"
+```
+
+### Ubuntu repository for X86_64 systems
+
+```shell
+export REPO_URL="http://archive.ubuntu.com/ubuntu"
+export TARGET_ARCH="amd64"
+```
+
+### AWS Repositories
+
+AWS provides mirrors of the various Ubuntu repositories per region, so we can
+use those for speed. We can get the region calling:
+
+```shell
+export AWS_REGION="$(curl --silent http://169.254.169.254/latest/meta-data/placement/region)"
+```
+
+Then for `ARM64` the repository base URL will be:
+
+```shell
+export REPO_URL="http://${REGION}.clouds.ports.ubuntu.com/ubuntu-ports/"
+export TARGET_ARCH="arm64"
+```
+
+While for `X86_64` the repository base URL will be:
+
+```shell
+export REPO_URL="http://${REGION}.clouds.ports.ubuntu.com/ubuntu-ports/"
+export TARGET_ARCH="amd64"
+```
+
+
 
 Bootstrapping the system
-------------------------
+========================
 
-First let's get our region:
+Now we can simply use `debootstrap` to install the basics of the OS:
 
-```
-REGION="$(curl --silent http://169.254.169.254/latest/meta-data/placement/region)"
-```
-
-We'll use `debootstrap` to bootstrap a `minbase` system into `/mnt`:
-
-For **Graviton** (`arm64`) use:
-
-```
-debootstrap --arch=arm64 --variant=minbase --include=systemd \
-  jammy /mnt http://${REGION}.clouds.ports.ubuntu.com/ubuntu-ports/
-```
-
-On the other hand for **Intel/AMD** (`x86_64`) use:
-
-```
-debootstrap --arch=amd64 --variant=minbase --include=systemd \
-  jammy /mnt http://${REGION}.ec2.archive.ubuntu.com/ubuntu/
+```shell
+debootstrap --arch="${TARGET_ARCH}" --variant=minbase --include=systemd jammy /mnt "${REPO_URL}"
 ```
 
 Then we'll set up the `/etc/mtab` link and `/etc/fstab` file:
 
-```
+```shell
 ln -sf /proc/self/mounts /mnt/etc/mtab
 
-FMT="%-42s %-11s %-5s %-17s %-5s %s"
 cat > "/mnt/etc/fstab" << EOF
-$(printf "${FMT}" "# DEVICE UUID" "MOUNTPOINT" "TYPE" "OPTIONS" "DUMP" "FSCK")
-$(findmnt -no SOURCE /mnt | xargs blkid -o export | awk -v FMT="${FMT}" '/^UUID=/ { printf(FMT, $0, "/", "ext4", "defaults,discard", "0", "1" ) }')
-$(findmnt -no SOURCE /mnt/boot/efi | xargs blkid -o export | awk -v FMT="${FMT}" '/^UUID=/ { printf(FMT, $0, "/boot/efi", "vfat", "umask=0077", "0", "1" ) }')
+$(printf "# %-41s %-15s %-5s %-17s %-5s %s" "PARTITION" "MOUNTPOINT" "TYPE" "OPTIONS" "DUMP" "FSCK")
+$(printf "UUID=%-38s %-15s %-5s %-17s %-5s %s" $(findmnt -no UUID,TARGET,FSTYPE "${ROOT_DEV}") "defaults,discard" "0" "1")
+$(printf "UUID=%-38s %-15s %-5s %-17s %-5s %s" $(findmnt -no UUID,TARGET,FSTYPE "${BOOT_DEV}") "umask=0077" "0" "1")
 EOF
 ```
 
-We then want to make sure we get our APT sources configured in our region.
+We then need to prepare our sources list for APT in `/etc/apt/sources.list`:
 
-For **Graviton** (`arm64`) use:
-
-```
+```shell
 cat > "/mnt/etc/apt/sources.list" << EOF
-deb http://${REGION}.clouds.ports.ubuntu.com/ubuntu-ports jammy main restricted universe multiverse
-deb http://${REGION}.clouds.ports.ubuntu.com/ubuntu-ports jammy-updates main restricted universe multiverse
-deb http://ports.ubuntu.com/ubuntu-ports jammy-security main restricted universe multiverse
-EOF
-```
-
-On the other hand for **Intel/AMD** (`x86_64`) use:
-
-```
-cat > "/mnt/etc/apt/sources.list" << EOF
-deb http://${REGION}.ec2.archive.ubuntu.com/ubuntu jammy main restricted universe multiverse
-deb http://${REGION}.ec2.archive.ubuntu.com/ubuntu jammy-updates main restricted universe multiverse
-deb http://security.ubuntu.com/ubuntu jammy-security main restricted universe multiverse
+deb ${REPO_URL} jammy main restricted universe multiverse
+deb ${REPO_URL} jammy-updates main restricted universe multiverse
+deb ${REPO_URL} jammy-security main restricted universe multiverse
 EOF
 ```
 
 At this point we can mount the various filesystems required by the installation:
 
-```
+```shell
 mount -t proc proc "/mnt/proc"
 mount -t sysfs sysfs "/mnt/sys"
 mount -o bind /run "/mnt/run"
@@ -117,114 +278,140 @@ mount -o bind /dev "/mnt/dev"
 mount -o bind /dev/pts "/mnt/dev/pts"
 ```
 
-Finally let's download a copy of our `minimal-os` and `minimal-ec2-os` packages
-and place them into our target system. If you have them locally:
 
-```
-cp ~ubuntu/minimal-os_1.0.4_all.deb '/mnt/minimal-os.deb'
-cp ~ubuntu/minimal-ec2-os_1.0.4_all.deb '/mnt/minimal-ec2-os.deb'
-```
 
-Or download from GitHub:
+Minimal OS packages
+===================
 
-```
-curl -L -o '/mnt/minimal-os.deb' \
-  'https://github.com/usrz/minimal-ubuntu/releases/download/v1.0.4/minimal-os_1.0.4_all.deb'
-curl -L -o '/mnt/minimal-ec2-os.deb' \
-  'https://github.com/usrz/minimal-ubuntu/releases/download/v1.0.4/minimal-ec2-os_1.0.4_all.deb'
-```
+> TODO: we need to set up our APT repo to download the packages
+>
+> ```shell
+> curl -L -o '/mnt/minimal-os.deb' \
+>   'https://github.com/usrz/minimal-ubuntu/releases/download/v1.0.4/minimal-os_1.0.4_all.deb'
+> curl -L -o '/mnt/minimal-ec2-os.deb' \
+>  'https://github.com/usrz/minimal-ubuntu/releases/download/v1.0.4/minimal-ec2-os_1.0.4_all.deb'
+> curl -L -o '/mnt/minimal-rpo-os.deb' \
+>  'https://github.com/usrz/minimal-ubuntu/releases/download/v1.0.4/minimal-rpi-os_1.0.4_all.deb'
+> ```
 
-Minimal installation
---------------------
+
+Operating system installation
+=============================
 
 We continue the installation by chrooting into the target system using the `C`
 locale (as no other locale has yet been generated):
 
-```
+```shell
 eval $(LANG=C LC_ALL=C LANGUAGE=C locale) chroot "/mnt" /bin/bash --login
+bind 'set enable-bracketed-paste off'
 ```
 
 We then want to update the system, and install all packages required for a
 minimal system:
 
-```
+```shell
 export DEBIAN_FRONTEND=noninteractive
 
-export APT_OPTIONS="-oAPT::Install-Recommends=false \
+export APT_OPTIONS="\
+  -oAPT::Install-Recommends=false \
   -oAPT::Install-Suggests=false \
   -oAcquire::Languages=none"
 
 apt-get $APT_OPTIONS update && \
   apt-get $APT_OPTIONS --yes dist-upgrade && \
-  apt-get $APT_OPTIONS --yes install ./minimal-ec2-os.deb ./minimal-os.deb linux-aws
+  apt-get $APT_OPTIONS --yes install /minimal-os.deb
 ```
 
-Then for sanity's sake, let's keep only the `minimal-ec2-os`, `minimal-os` and
-`linux-aws` packages marked as _manually installed_ (this will help with
-`apt-get autoremove`):
+Then for sanity's sake, let's keep only the `minimal-os` package marked as
+_manually installed_ (this will help with `apt-get autoremove`):
 
-```
+```shell
 apt-mark showmanual | xargs apt-mark auto
-apt-mark manual minimal-ec2-os minimal-os linux-aws
+apt-mark manual minimal-os
 ```
 
-We continue by installing the GRUB boot loader, for **Graviton** (`arm64`):
 
-```
-grub-install --target=arm64-efi "/dev/$(findmnt -no SOURCE / | xargs lsblk -no pkname)" && update-grub
-```
+Kernel and helper packages
+==========================
 
-And for **Intel/AMD** (`x86_64`):
+Next step is to install a kernel and our helper package for AWS EC2 or Raspberry
+Pi systems.
 
-```
-grub-install --target=x86_64-efi "/dev/$(findmnt -no SOURCE / | xargs lsblk -no pkname)" && update-grub
-```
+### AWS EC2 kernel
 
-We then want to restrict SSH to forbid password-based logins:
+For AWS EC2 instances, the `minimal-ec2-os` package will install `grub` and its
+configurations on the root device. The kernel comes from `linux-aws`:
 
-```
-sed -i -E \
-  -e 's/^#?\s*PasswordAuthentication\s+(yes|no)\s*$/PasswordAuthentication no/g' \
-  /etc/ssh/sshd_config
+```shell
+apt-get --yes install linux-aws minimal-ec2-os
 ```
 
-Finally, let's make sure that the `minimal-ec2-os-setup` script runs upon
-the first boot:
+### Raspberry Pi kernel
 
+For the Raspberry Pi, we don't need a boot loader, and the `minimal-rpi-os` will
+take care of preparing the `/boot/rpi` filesystem for booting:
+
+```shell
+apt-get --yes install linux-raspi minimal-rpi-os
 ```
-sed -i 's|^RUN_SETUP=.*$|RUN_SETUP=true|g' /etc/default/minimal-ec2-os-setup
+
+### Other systems
+
+For all other systems the `linux-generic` kernel is a good starting point:
+
+```shell
+apt-get --yes install linux-generic
 ```
+
+We then need to install the `grub` boot loader, as a starting point use:
+
+```shell
+# Install GRUB
+apt-get install grub-efi
+
+# Basic minimal GRUB configuration
+cat > "/etc/default/grub" << EOF
+GRUB_DEFAULT=0
+GRUB_TIMEOUT=0
+GRUB_TIMEOUT_STYLE="hidden"
+GRUB_CMDLINE_LINUX_DEFAULT="nomodeset console=tty1"
+GRUB_DISTRIBUTOR="Minimal Ubuntu OS"
+EOF
+
+# Install GRUB on the boot device, and update the kernel
+grub-install "${BASE_DEV}"
+update-grub
+```
+
+
 
 Cleaning up
------------
+===========
 
 Let's clean up our APT state and exit the chrooted environment:
 
-```
+```shell
 apt-get clean && exit
 ```
 
 We then want to clean up a bunch of files left over by the installation, some
 of them will be re-created once `minimal-ec2-os-setup` runs the first time:
 
-```
-rm -f /mnt/etc/hostname \
-      /mnt/etc/hosts \
-      /mnt/etc/ssh/ssh_host_*_key* \
-      /mnt/minimal-os.deb \
-      /mnt/minimal-ec2-os.deb \
+```shell
+rm -f /mnt/etc/ssh/ssh_host_*_key* \
+      /mnt/minimal*os.deb \
       /mnt/root/.bash_history
 ```
 
 At this point we can simply unmount our volume:
 
-```
+```shell
 umount -Rlf /mnt
 ```
 
 And clean out any unused block:
 
-```
+```shell
 zerofree -v /dev/nvme1n1p2
 ```
 
