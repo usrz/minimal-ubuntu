@@ -1,0 +1,4 @@
+#!/bin/bash
+
+# Possibly run setup on first boot of the machine
+#systemctl enable minimal-rpi-os-setup
