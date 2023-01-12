@@ -373,15 +373,12 @@ apt-get --yes install linux-raspi minimal-rpi-os
 For all other systems the `linux-generic` kernel is a good starting point:
 
 ```shell
-apt-get --yes install linux-generic
+apt-get --yes install linux-generic grub-efi
 ```
 
-We then need to install the `grub` boot loader, as a starting point use:
+We then need to configure the `grub` boot loader, as a starting point use:
 
 ```shell
-# Install GRUB
-apt-get install grub-efi
-
 # Basic minimal GRUB configuration
 cat > "/etc/default/grub" << EOF
 GRUB_DEFAULT=0
@@ -411,9 +408,13 @@ We then want to clean up a bunch of files left over by the installation, some
 of them will be re-created once `minimal-ec2-os-setup` runs the first time:
 
 ```shell
-rm -f /mnt/etc/ssh/ssh_host_*_key* \
-      /mnt/minimal*os.deb \
-      /mnt/root/.bash_history
+rm -f /mnt/minimal*os.deb \
+      /mnt/etc/ssh/ssh_host_*_key* \
+      /mnt/root/.bash_history \
+      /mnt/var/log/alternatives.log \
+      /mnt/var/log/apt/* \
+      /mnt/var/log/bootstrap.log \
+      /mnt/var/log/dpkg.log
 ```
 
 At this point we can simply unmount our volume:
@@ -422,14 +423,15 @@ At this point we can simply unmount our volume:
 umount -Rlf /mnt
 ```
 
-And clean out any unused block:
-
-```shell
-zerofree -v /dev/nvme1n1p2
-```
 
 Creating an AMI
 ---------------
+
+First of all clean out any unused block in our root filesystem:
+
+```shell
+zerofree -v "${ROOT_DEV}"
+```
 
 Going back to the EC2 console we can now detach the volume we created from the
 EC2 instance we used for setup, and create a snapshot from it.
