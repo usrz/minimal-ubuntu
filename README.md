@@ -19,6 +19,7 @@ Minimal Ubuntu
 * [Bootstrapping the system](#bootstrapping-the-system)
 * [Minimal OS packages](#minimal-os-packages) _(TODO)_
 * [Operating system installation](#operating-system-installation)
+  * [User login](#user-login)
 * [Kernel and helper packages](#kernel-and-helper-packages)
   * [AWS EC2 kernel](#aws-ec2-kernel)
   * [Raspberry Pi kernel](#raspberry-pi-kernel)
@@ -342,6 +343,23 @@ _manually installed_ (this will help with `apt-get autoremove`):
 apt-mark showmanual | xargs apt-mark auto
 apt-mark manual minimal-os
 ```
+
+
+### User login
+
+The `minimal-os` package installs the `ubuntu` user by default. If you need
+to log in interactively (e.g. from the console) set the password now:
+
+```shell
+passwd ubuntu
+```
+
+If you need SSH access, we only allow SSH keys. Place the authorized SSH public
+key in `/home/ubuntu/.ssh/authorized_keys`.
+
+Finally, we allow **password-less sudo** for the `ubuntu` user. If this is not
+to your liking, take a peek at the `/etc/sudoers.d/00-minimal-os` file.
+
 
 
 Kernel and helper packages
