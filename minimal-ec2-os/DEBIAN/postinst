@@ -10,3 +10,10 @@ sed -i -E 's|^#?NTP=.*$|NTP=169.254.169.123|g' /etc/systemd/timesyncd.conf
 systemctl enable "serial-getty@ttyS0.service"
 systemctl disable "getty@tty1.service"
 systemctl mask "getty@tty1.service"
+
+# Install GRUB on the boot device
+BOOT_DEVICE="/dev/$(findmnt -no SOURCE / | xargs lsblk -no PKNAME)"
+GRUB_ARCH="$(uname -m | sed 's|aarch64|arm64|g')-efi"
+
+grub-install --target="${GRUB_ARCH}" "${BOOT_DEVICE}"
+update-grub
