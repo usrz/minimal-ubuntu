@@ -246,6 +246,19 @@ Now we can simply use `debootstrap` to install the basics of the OS:
 debootstrap --arch="${TARGET_ARCH}" --variant=minbase --include=systemd jammy /mnt "${REPO_URL}"
 ```
 
+First of all, we need to prepare the `/etc/hostname` and `/etc/hosts` files:
+
+```shell
+# Set the generic "ubuntu" host name
+echo "ubuntu" > "/mnt/etc/hostname"
+
+# Basic "hosts" file for "ubuntu"
+cat > "/mnt/etc/hosts" << EOF
+127.0.0.1 localhost
+127.0.1.1 ubuntu ubuntu.local
+EOF
+```
+
 Then we'll set up the `/etc/mtab` link and `/etc/fstab` file:
 
 ```shell
