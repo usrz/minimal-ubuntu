@@ -52,4 +52,4 @@ id ubuntu > /dev/null 2>&1 || {
 }
 
 # Enable "minimal-os-setup" to trigger SSH host key generation on first boot
-systemctl enable minimal-os-setup || true
+systemctl enable minimal-os-setup 2> /dev/null || true
