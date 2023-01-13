@@ -1,9 +1,6 @@
 #!/bin/sh
 set -e
 
-# Possibly run setup on first boot of the machine
-systemctl enable minimal-ec2-os-setup
-
 # Fix the NTP server to AWS' own EC2 NTP server
 sed -i -E 's|^#?NTP=.*$|NTP=169.254.169.123|g' /etc/systemd/timesyncd.conf
 
@@ -18,3 +15,6 @@ GRUB_ARCH="$(uname -m | sed 's|aarch64|arm64|g')-efi"
 
 grub-install --target="${GRUB_ARCH}" "${BOOT_DEVICE}"
 update-grub
+
+ # Enable "minimal-os-setup" to run on first boot
+systemctl enable minimal-os-setup 2> /dev/null || true
