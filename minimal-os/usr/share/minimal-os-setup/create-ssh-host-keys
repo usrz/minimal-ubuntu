@@ -1,22 +1,15 @@
 #!/bin/sh
-set -e
-
-# Check we are root
-if test "$(id -u)" -ne 0 ; then
-	echo "${0}: can only be run as root"
-	exit 1
-fi
+. /usr/share/minimal-os-setup/common-functions
 
 # Make sure SSH has all the keys
-echo "*** Generating SSH host keys"
+_notice 'Generating SSH host keys'
 
 _create_host_key() {
 	if test -f "${1}" ; then
-		echo "*** File '${1}' exists, skipping..."
+		_notice "SSH host key file '${1}' exists, skipping..."
 	else
-		echo "*** Generating '${1}', this may take some time ..."
-		ssh-keygen -qqq -f "${1}" -N '' -C "$(hostname)" -t "${2}"
-		echo "    $(ssh-keygen -l -f "${1}")"
+		_notice "Generating SSH host key file '${1}', this may take some time ..."
+		ssh-keygen -f "${1}" -N '' -C "$(hostname)" -t "${2}"
 	fi
 }
 
