@@ -1,9 +1,12 @@
 MINIMAL OS SETUP SCRIPT
 -----------------------
 
-This directory contains the various scripts required to set up the "minimal-os"
-set of packages.
+The "minimal-os-setup" script runs once, upon first boot of the system, and
+perform the initial setup required.
 
-Each individual package will put their necessary scripts in this directory, and
-link them into "/usr/lib/minimal-os-setup.d", then the "minimal-os-setup" script
-will run them upon the _first_ startup.
+The various "minimal-os" packages enable it in their "postinst" script, and
+add the various required script to run in the "/usr/lib/minimal-os-setup.d"
+directory.
+
+The "/usr/share/minimal-os-setup/common-functions" script contains common
+functions that can be invoked by sub-packages.
