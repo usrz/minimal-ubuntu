@@ -45,3 +45,21 @@ _grow_root_partition() {
 		_notice "Partition '/dev/${PART_DEV}' grown from ${OLD_SIZE} to ${NEW_SIZE}"
 	}
 }
+
+# Set hostname (defaults to "ubuntu")
+_set_hostname() {
+	NAME="${1:-ubuntu}"
+	_notice "Setting hostname to '${NAME}'"
+
+	# Set the hostname in "/etc/hostname"
+	echo "${NAME}" > "/etc/hostname"
+
+	# Setup a very basic "/etc/hosts" file
+	cat > "/etc/hosts" <<- EOF
+		127.0.0.1	localhost
+		127.0.1.1	${NAME}	${NAME}.local
+	EOF
+
+	# Remember this host name in this session
+	hostname "${NAME}"
+}
