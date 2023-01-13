@@ -13,9 +13,8 @@ Minimal Ubuntu
   * [Mounting partitions for UEFI systems](#mounting-partitions-for-uefi-systems)
   * [Mounting partitions for Raspberry Pi](#mounting-partitions-for-raspberry-pi)
 * [Architecture and repository URL](#architecture-and-repository-url)
-  * [Ubuntu repository for ARM64 systems](#ubuntu-repository-for-arm64-systems)
-  * [Ubuntu repository for X86_64 systems](#ubuntu-repository-for-x86_64-systems)
-  * [AWS Repositories](#aws-repositories)
+  * [Ubuntu repositories](#ubuntu-repositories)
+  * [AWS repositories](#aws-repositories)
 * [Bootstrapping the system](#bootstrapping-the-system)
 * [Minimal OS packages](#minimal-os-packages) _(TODO)_
 * [Operating system installation](#operating-system-installation)
@@ -215,21 +214,26 @@ We export this into the `REPO_URL` and `TARGET_ARCH` environment variables.
 
 Remember, Raspberry Pis, AWS Graviton instances, M1/M2 Macs are ARM64!
 
-### Ubuntu repository for ARM64 systems
+### Ubuntu repositories
+
+Normally we want to use a local mirror of the Ubuntu repositories, in our case
+we're in Germany, so we'll use the `de` mirrors.
+
+In our case, for `ARM64`, the repository base URL will be:
 
 ```shell
-export REPO_URL="http://ports.ubuntu.com/ubuntu-ports"
+export REPO_URL="http://de.ports.ubuntu.com/ubuntu-ports"
 export TARGET_ARCH="arm64"
 ```
 
-### Ubuntu repository for X86_64 systems
+While for `X86_64` the repository base URL will be:
 
 ```shell
-export REPO_URL="http://archive.ubuntu.com/ubuntu"
+export REPO_URL="http://de.archive.ubuntu.com/ubuntu"
 export TARGET_ARCH="amd64"
 ```
 
-### AWS Repositories
+### AWS repositories
 
 AWS provides mirrors of the various Ubuntu repositories per region, so we can
 use those for speed. We can get the region calling:
@@ -241,14 +245,14 @@ export AWS_REGION="$(curl --silent http://169.254.169.254/latest/meta-data/place
 Then for `ARM64` the repository base URL will be:
 
 ```shell
-export REPO_URL="http://${REGION}.clouds.ports.ubuntu.com/ubuntu-ports/"
+export REPO_URL="http://${REGION}.clouds.ports.ubuntu.com/ubuntu-ports"
 export TARGET_ARCH="arm64"
 ```
 
 While for `X86_64` the repository base URL will be:
 
 ```shell
-export REPO_URL="http://${REGION}.clouds.ports.ubuntu.com/ubuntu-ports/"
+export REPO_URL="http://${REGION}.clouds.archive.ubuntu.com/ubuntu"
 export TARGET_ARCH="amd64"
 ```
 
