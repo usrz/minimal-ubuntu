@@ -245,14 +245,14 @@ export AWS_REGION="$(curl --silent http://169.254.169.254/latest/meta-data/place
 Then for `ARM64` the repository base URL will be:
 
 ```shell
-export REPO_URL="http://${REGION}.clouds.ports.ubuntu.com/ubuntu-ports"
+export REPO_URL="http://${AWS_REGION}.clouds.ports.ubuntu.com/ubuntu-ports"
 export TARGET_ARCH="arm64"
 ```
 
 While for `X86_64` the repository base URL will be:
 
 ```shell
-export REPO_URL="http://${REGION}.clouds.archive.ubuntu.com/ubuntu"
+export REPO_URL="http://${AWS_REGION}.clouds.archive.ubuntu.com/ubuntu"
 export TARGET_ARCH="amd64"
 ```
 
