@@ -9,6 +9,18 @@ systemctl enable "serial-getty@ttyS0.service"
 systemctl disable "getty@tty1.service"
 systemctl mask "getty@tty1.service"
 
+# Update "/etc/default/grub" if unmodified from the distribution
+if cmp --silent "/usr/share/grub/default/grub" "/etc/default/grub" ; then
+	echo "Updating '/etc/default/grub'"
+	cat > "/etc/default/grub" <<- EOF
+		GRUB_DEFAULT=0
+		GRUB_TIMEOUT=0
+		GRUB_TIMEOUT_STYLE="hidden"
+		GRUB_CMDLINE_LINUX_DEFAULT="nomodeset console=tty1 console=ttyS0"
+		GRUB_DISTRIBUTOR="Minimal Ubuntu OS"
+	EOF
+fi
+
 # Install GRUB on the boot device
 BOOT_DEVICE="/dev/$(findmnt -no SOURCE / | xargs lsblk -no PKNAME)"
 GRUB_ARCH="$(uname -m | sed 's|aarch64|arm64|g')-efi"
