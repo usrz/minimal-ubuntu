@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/bin/sh
+set -e
 
 # Update locale if unset in /etc/default/locale
 grep -q '^LANGUAGE' '/etc/default/locale' || {
@@ -51,7 +52,4 @@ id ubuntu > /dev/null 2>&1 || {
 }
 
 # Enable "minimal-os-setup" to trigger SSH host key generation on first boot
-ln -sf \
-	/usr/share/minimal-os-setup/create-ssh-host-keys \
-	/usr/lib/minimal-os-setup.d/90-create-ssh-host-keys
-systemctl enable minimal-os-setup
+systemctl enable minimal-os-setup || true
