@@ -1,15 +1,10 @@
 #!/bin/sh
-set -e
-
-# Check we are root
-if test "$(id -u)" -ne 0 ; then
-	echo "${0}: can only be run as root"
-	exit 1
-fi
+. /usr/share/minimal-os-setup/common-functions
 
 # Run the scripts one by one
-echo '*** Running Minimal OS initial setup'
+_notice 'Starting'
 run-parts "/lib/minimal-os-setup.d"
+_notice 'Done'
 
 # Make sure we the setup service is disabled
 systemctl disable minimal-os-setup.service 2> /dev/null || true
