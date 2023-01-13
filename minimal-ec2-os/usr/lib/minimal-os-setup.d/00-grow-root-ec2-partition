@@ -1,0 +1,5 @@
+#!/bin/sh
+. /usr/share/minimal-os-setup/common-functions
+
+# Simply grow the root partition
+_grow_root_partition
