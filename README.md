@@ -388,6 +388,15 @@ configurations on the root device. The kernel comes from `linux-aws`:
 apt-get --yes install linux-aws /minimal-ec2-os.deb
 ```
 
+After installing, as AWS EC2 boot via UEFI and `grub` simply review the contents
+of `/etc/default/grub` and run:
+
+```shell
+# Install GRUB on the boot device, and update the kernel
+grub-install "${BASE_DEV}"
+update-grub
+```
+
 ### Raspberry Pi kernel
 
 For the Raspberry Pi, we don't need a boot loader, and the `minimal-rpi-os` will

@@ -21,12 +21,5 @@ if cmp --silent "/usr/share/grub/default/grub" "/etc/default/grub" ; then
 	EOF
 fi
 
-# Install GRUB on the boot device
-BOOT_DEVICE="/dev/$(findmnt -no SOURCE / | xargs lsblk -no PKNAME)"
-GRUB_ARCH="$(uname -m | sed 's|aarch64|arm64|g')-efi"
-
-grub-install --target="${GRUB_ARCH}" "${BOOT_DEVICE}"
-update-grub
-
- # Enable "minimal-os-setup" to run on first boot
+# Enable "minimal-os-setup" to run on first boot
 systemctl enable minimal-os-setup 2> /dev/null || true
