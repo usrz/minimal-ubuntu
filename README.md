@@ -10,8 +10,8 @@ Minimal Ubuntu
   * [GPT and UEFI](#gpt-and-uefi)
   * [MSDOS (for Raspberry Pi)](#msdos-for-raspberry-pi)
 * [Formatting and mounting](#formatting-and-mounting)
-  * [Mounting boot partition for UEFI systems](#mounting-boot-partition-for-uefi-systems)
-  * [Mounting boot partition for Raspberry Pi](#mounting-boot-partition-for-raspberry-pi)
+  * [Mounting partitions for UEFI systems](#mounting-partitions-for-uefi-systems)
+  * [Mounting partitions for Raspberry Pi](#mounting-partitions-for-raspberry-pi)
 * [Architecture and repository URL](#architecture-and-repository-url)
   * [Ubuntu repository for ARM64 systems](#ubuntu-repository-for-arm64-systems)
   * [Ubuntu repository for X86_64 systems](#ubuntu-repository-for-x86_64-systems)
@@ -160,28 +160,26 @@ mkfs.fat -F32 "${BOOT_DEV}"
 mkfs.ext4 -F "${ROOT_DEV}"
 ```
 
-Then let's mount our root partition under `mnt`:
+
+### Mounting partitions for UEFI systems
+
+We'll mount the root partition under `/mnt` and for UEFI systems, the boot
+partition will be mounted under `/mnt/boot/efi`:
 
 ```shell
 mount "${ROOT_DEV}" /mnt
-```
-
-
-### Mounting boot partition for UEFI systems
-
-For UEFI systems, the boot partition will be mounted under `/mnt/boot/efi`:
-
-```shell
 mkdir -p /mnt/boot/efi
 mount  "${BOOT_DEV}" /mnt/boot/efi
 ```
 
 
-### Mounting boot partition for Raspberry Pi
+### Mounting partitions for Raspberry Pi
 
-For the Raspberry Pi, on the other hand, the mountpoints is `/mnt/boot/rpi`:
+We'll mount the root partition under `/mnt` and for the Raspberry Pi, the
+mountpoints of our boot partition is `/mnt/boot/rpi`::
 
 ```shell
+mount "${ROOT_DEV}" /mnt
 mkdir -p /mnt/boot/rpi
 mount  "${BOOT_DEV}" /mnt/boot/rpi
 ```
