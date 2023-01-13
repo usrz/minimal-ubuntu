@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/bin/sh
+set -e
 
 # Check we are root
 if test "$(id -u)" -ne 0 ; then
@@ -11,9 +12,9 @@ echo '*** Running Minimal OS initial setup'
 run-parts "/lib/minimal-os-setup.d"
 
 # Make sure we the setup service is disabled
-systemctl disable minimal-os-setup.service 2> /dev/null
+systemctl disable minimal-os-setup.service 2> /dev/null || true
 
 # We run the service only once (normally) so we mask it. Other packages
 # needing to run setup enable it in their "postinst" script. Masking makes
 # sure that package updates won't accidentally re-enable the script.
-systemctl mask minimal-os-setup.service 2> /dev/null
+systemctl mask minimal-os-setup.service 2> /dev/null || true

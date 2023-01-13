@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/bin/sh
+set -e
 
 # Check we are root
 if test "$(id -u)" -ne 0 ; then
