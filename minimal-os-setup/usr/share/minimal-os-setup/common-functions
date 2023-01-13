@@ -9,10 +9,10 @@ fi
 
 # Print a message both to stderr and console
 _notice() {
-	NAME="$(basename $(realpath "${0}"))"
-	printf 'Setup [%s] %s\n' "${NAME}" "${*}"
+	SCRIPT_NAME="$(basename $(realpath "${0}"))"
+	printf 'Setup [%s] %s\n' "${SCRIPT_NAME}" "${*}"
 	printf '\033[0m[\033[36mNOTICE\033[0m] Setup [%s] \033[1;37m%s\033[0m\n' \
-		"${NAME}" "${*}" > /dev/console
+		"${SCRIPT_NAME}" "${*}" > /dev/console
 }
 
 # Attempt to grow the partition
@@ -48,18 +48,18 @@ _grow_root_partition() {
 
 # Set hostname (defaults to "ubuntu")
 _set_hostname() {
-	NAME="${1:-ubuntu}"
-	_notice "Setting hostname to '${NAME}'"
+	NEW_HOST_NAME="${1:-ubuntu}"
+	_notice "Setting hostname to '${NEW_HOST_NAME}'"
 
 	# Set the hostname in "/etc/hostname"
-	echo "${NAME}" > "/etc/hostname"
+	echo "${NEW_HOST_NAME}" > "/etc/hostname"
 
 	# Setup a very basic "/etc/hosts" file
 	cat > "/etc/hosts" <<- EOF
 		127.0.0.1	localhost
-		127.0.1.1	${NAME}	${NAME}.local
+		127.0.1.1	${NEW_HOST_NAME}	${NEW_HOST_NAME}.local
 	EOF
 
 	# Remember this host name in this session
-	hostname "${NAME}"
+	hostname "${NEW_HOST_NAME}"
 }
