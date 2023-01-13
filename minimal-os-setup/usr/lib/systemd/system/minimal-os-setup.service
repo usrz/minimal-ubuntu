@@ -4,9 +4,6 @@ Requires=network-online.target
 Before=ssh.service
 
 [Service]
-EnvironmentFile=/etc/default/minimal-os-setup
-StandardOutput=journal+console
-StandardError=journal+console
 ExecStart=/usr/libexec/minimal-os-setup
 Type=oneshot
 
