@@ -192,6 +192,8 @@ Minimal OS packages
 > TODO: we need to set up our APT repo to download the packages
 >
 > ```shell
+> curl -L -o '/mnt/minimal-os-setup.deb' \
+>   'https://github.com/usrz/minimal-ubuntu/releases/download/v1.0.4/minimal-os-setup_1.0.4_all.deb'
 > curl -L -o '/mnt/minimal-os.deb' \
 >   'https://github.com/usrz/minimal-ubuntu/releases/download/v1.0.4/minimal-os_1.0.4_all.deb'
 > curl -L -o '/mnt/minimal-ec2-os.deb' \
@@ -338,7 +340,7 @@ export APT_OPTIONS="\
 
 apt-get $APT_OPTIONS update && \
   apt-get $APT_OPTIONS --yes dist-upgrade && \
-  apt-get $APT_OPTIONS --yes install /minimal-os.deb
+  apt-get $APT_OPTIONS --yes install /minimal-os-setup.deb /minimal-os.deb
 ```
 
 Then for sanity's sake, let's keep only the `minimal-os` package marked as
@@ -379,7 +381,7 @@ For AWS EC2 instances, the `minimal-ec2-os` package will install `grub` and its
 configurations on the root device. The kernel comes from `linux-aws`:
 
 ```shell
-apt-get --yes install linux-aws minimal-ec2-os
+apt-get --yes install linux-aws /minimal-ec2-os.deb
 ```
 
 ### Raspberry Pi kernel
@@ -388,7 +390,7 @@ For the Raspberry Pi, we don't need a boot loader, and the `minimal-rpi-os` will
 take care of preparing the `/boot/rpi` filesystem for booting:
 
 ```shell
-apt-get --yes install linux-raspi minimal-rpi-os
+apt-get --yes install linux-raspi /minimal-rpi-os.deb
 ```
 
 ### Other systems
