@@ -49,3 +49,9 @@ id ubuntu > /dev/null 2>&1 || {
 		chmod 600 /home/ubuntu/.ssh/authorized_keys
 		chown -R ubuntu:ubuntu /home/ubuntu/.ssh
 }
+
+# Enable "minimal-os-setup" to trigger SSH host key generation on first boot
+ln -sf \
+	/usr/share/minimal-os-setup/create-ssh-host-keys \
+	/usr/lib/minimal-os-setup.d/90-create-ssh-host-keys
+systemctl enable minimal-os-setup
