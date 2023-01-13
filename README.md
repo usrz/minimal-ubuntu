@@ -188,6 +188,22 @@ mount  "${BOOT_DEV}" /mnt/boot/rpi
 
 
 
+Minimal OS packages
+===================
+
+> TODO: we need to set up our APT repo to download the packages
+>
+> ```shell
+> curl -L -o '/mnt/minimal-os.deb' \
+>   'https://github.com/usrz/minimal-ubuntu/releases/download/v1.0.4/minimal-os_1.0.4_all.deb'
+> curl -L -o '/mnt/minimal-ec2-os.deb' \
+>  'https://github.com/usrz/minimal-ubuntu/releases/download/v1.0.4/minimal-ec2-os_1.0.4_all.deb'
+> curl -L -o '/mnt/minimal-rpo-os.deb' \
+>  'https://github.com/usrz/minimal-ubuntu/releases/download/v1.0.4/minimal-rpi-os_1.0.4_all.deb'
+> ```
+
+
+
 Architecture and repository URL
 ===============================
 
@@ -247,42 +263,8 @@ Now we can simply use `debootstrap` to install the basics of the OS:
 debootstrap --arch="${TARGET_ARCH}" --variant=minbase --include=systemd jammy /mnt "${REPO_URL}"
 ```
 
-First of all, we need to prepare the `/etc/hostname` and `/etc/hosts` files:
-
-```shell
-# Set the generic "ubuntu" host name
-echo "ubuntu" > "/mnt/etc/hostname"
-
-# Basic "hosts" file for "ubuntu"
-cat > "/mnt/etc/hosts" << EOF
-127.0.0.1 localhost
-127.0.1.1 ubuntu ubuntu.local
-EOF
-```
-
-Then we'll set up the `/etc/mtab` link and `/etc/fstab` file:
-
-```shell
-ln -sf /proc/self/mounts /mnt/etc/mtab
-
-cat > "/mnt/etc/fstab" << EOF
-$(printf "# %-41s %-15s %-5s %-17s %-5s %s" "PARTITION" "MOUNTPOINT" "TYPE" "OPTIONS" "DUMP" "FSCK")
-$(printf "UUID=%-38s %-15s %-5s %-17s %-5s %s" $(findmnt -no UUID,TARGET,FSTYPE "${ROOT_DEV}") "defaults,discard" "0" "1")
-$(printf "UUID=%-38s %-15s %-5s %-17s %-5s %s" $(findmnt -no UUID,TARGET,FSTYPE "${BOOT_DEV}") "umask=0077" "0" "1")
-EOF
-```
-
-We then need to prepare our sources list for APT in `/etc/apt/sources.list`:
-
-```shell
-cat > "/mnt/etc/apt/sources.list" << EOF
-deb ${REPO_URL} jammy main restricted universe multiverse
-deb ${REPO_URL} jammy-updates main restricted universe multiverse
-deb ${REPO_URL} jammy-security main restricted universe multiverse
-EOF
-```
-
-At this point we can mount the various filesystems required by the installation:
+Once `debootstrap` is finished, we can mount the various filesystems required by
+the installation:
 
 ```shell
 mount -t proc proc "/mnt/proc"
@@ -292,36 +274,61 @@ mount -o bind /dev "/mnt/dev"
 mount -o bind /dev/pts "/mnt/dev/pts"
 ```
 
-
-
-Minimal OS packages
-===================
-
-> TODO: we need to set up our APT repo to download the packages
->
-> ```shell
-> curl -L -o '/mnt/minimal-os.deb' \
->   'https://github.com/usrz/minimal-ubuntu/releases/download/v1.0.4/minimal-os_1.0.4_all.deb'
-> curl -L -o '/mnt/minimal-ec2-os.deb' \
->  'https://github.com/usrz/minimal-ubuntu/releases/download/v1.0.4/minimal-ec2-os_1.0.4_all.deb'
-> curl -L -o '/mnt/minimal-rpo-os.deb' \
->  'https://github.com/usrz/minimal-ubuntu/releases/download/v1.0.4/minimal-rpi-os_1.0.4_all.deb'
-> ```
-
-
-Operating system installation
-=============================
-
-We continue the installation by chrooting into the target system using the `C`
-locale (as no other locale has yet been generated):
+And then `chroot` into our new environment using the `C` locale (as no other
+locale has yet been generated):
 
 ```shell
 eval $(LANG=C LC_ALL=C LANGUAGE=C locale) chroot "/mnt" /bin/bash --login
 bind 'set enable-bracketed-paste off'
 ```
 
+
+
+Operating system installation
+=============================
+
+We continue the installation by configuring some basic files.
+
+First of all, we need to prepare the `/etc/hostname` and `/etc/hosts` files:
+
+```shell
+# Set the generic "ubuntu" host name
+echo "ubuntu" > "/etc/hostname"
+
+# Basic "hosts" file for "ubuntu"
+cat > "/etc/hosts" << EOF
+127.0.0.1 localhost
+127.0.1.1 ubuntu ubuntu.local
+EOF
+```
+
+Then we'll set up the `/etc/mtab` link and `/etc/fstab` file:
+
+```shell
+ln -sf "/proc/self/mounts" "/etc/mtab"
+
+cat > "/etc/fstab" << EOF
+$(printf "# %-41s %-15s %-5s %-17s %-5s %s" "PARTITION" "MOUNTPOINT" "TYPE" "OPTIONS" "DUMP" "FSCK")
+$(printf "UUID=%-38s %-15s %-5s %-17s %-5s %s" $(findmnt -no UUID,TARGET,FSTYPE "${ROOT_DEV}") "defaults,discard" "0" "1")
+$(printf "UUID=%-38s %-15s %-5s %-17s %-5s %s" $(findmnt -no UUID,TARGET,FSTYPE "${BOOT_DEV}") "umask=0077" "0" "1")
+EOF
+```
+
+We then need to prepare our sources list for APT in `/etc/apt/sources.list`:
+
+```shell
+cat > "/etc/apt/sources.list" << EOF
+deb ${REPO_URL} jammy main restricted universe multiverse
+deb ${REPO_URL} jammy-updates main restricted universe multiverse
+deb ${REPO_URL} jammy-security main restricted universe multiverse
+EOF
+```
+
 We then want to update the system, and install all packages required for a
-minimal system:
+minimal system.
+
+The `minimal-os` package provided here is a meta-package that requires only
+a minimal set of dependencies, and provides some basic system configuration.
 
 ```shell
 export DEBIAN_FRONTEND=noninteractive
