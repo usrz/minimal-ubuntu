@@ -446,7 +446,7 @@ We then want to clean up a bunch of files left over by the installation, some
 of them will be re-created once `minimal-ec2-os-setup` runs the first time:
 
 ```shell
-rm -f /mnt/minimal*os.deb \
+rm -f /mnt/minimal-*os*.deb \
       /mnt/etc/ssh/ssh_host_*_key* \
       /mnt/root/.bash_history \
       /mnt/var/log/alternatives.log \
