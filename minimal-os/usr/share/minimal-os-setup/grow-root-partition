@@ -1,24 +1,31 @@
 #!/bin/sh
-set -e
-
-# Check we are root
-if test "$(id -u)" -ne 0 ; then
-	echo "${0}: can only be run as root"
-	exit 1
-fi
+. /usr/share/minimal-os-setup/common-functions
 
 # Attempt to grow the partition
 lsblk -no "name,pkname" "$(findmnt -no SOURCE /)" | {
-  read PART_DEV DISK_DEV
-  echo -e "*** Growing '/dev/${PART_DEV}' root partition."
+	read PART_DEV DISK_DEV
+	_notice "Growing '/dev/${PART_DEV}' root partition."
 
-  # Find the partition number from our device
-  PART_NUM="$(cat /sys/class/block/${PART_DEV}/partition)"
+	# Find the old size (for messages)
+	OLD_SIZE=$(lsblk -no SIZE "/dev/${PART_DEV}")
 
-  # Resize the partition to 100% of the available size and reload
-  parted -s "/dev/${DISK_DEV}" resizepart "${PART_NUM}" "100%"
-  partprobe "/dev/${DISK_DEV}"
+	# Find the partition number from our device
+	PART_NUM="$(cat /sys/class/block/${PART_DEV}/partition)"
 
-  # Resize the filesystem to the new partition size
-  resize2fs "/dev/${PART_DEV}"
+	# Resize the partition to 100% of the available size and reload
+	parted ---pretend-input-tty "/dev/${DISK_DEV}" <<- EOF
+		resizepart 2 100%
+		yes
+		quit
+		EOF
+
+	# parted -s  resizepart "${PART_NUM}" "100%"
+	partprobe "/dev/${DISK_DEV}"
+
+	# Resize the filesystem to the new partition size
+	resize2fs "/dev/${PART_DEV}"
+
+	# Find the new size and show what changed
+	NEW_SIZE=$(lsblk -no SIZE "/dev/${PART_DEV}")
+	_notice "Partition '/dev/${PART_DEV}' grown from ${OLD_SIZE} to ${NEW_SIZE}"
 }
