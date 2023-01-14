@@ -1,5 +1,14 @@
 #!/bin/sh
 . /usr/share/minimal-os-setup/common-functions
 
-# Simply grow the root partition
-_grow_root_partition
+# Attempt to grow the root partition with "growpart"
+lsblk -no NAME,PKNAME "$(findmnt -no SOURCE /)" | {
+	read PART_DEV DISK
+	PART_NUM="$(cat /sys/class/block/${PART_DEV}/partition)"
+	if growpart -N "/dev/${DISK}" "${PART_NUM}" > /dev/null 2>&1
+	then
+		echo "* Growing ${PART_DEV} partition"
+		growpart "/dev/${DISK}" "${PART_NUM}"
+		resize2fs "/dev/${PART_DEV}"
+	fi
+}
