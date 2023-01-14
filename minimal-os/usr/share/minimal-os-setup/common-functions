@@ -1,0 +1,34 @@
+#!/bin/sh
+set -e
+
+# Check we are root
+if test "$(id -u)" -ne 0 ; then
+	echo "${0}: can only be run as root"
+	exit 1
+fi
+
+# Print a message both to stderr and console
+_notice() {
+	SCRIPT_NAME="$(basename $(realpath "${0}"))"
+	printf 'Setup [%s] %s\n' "${SCRIPT_NAME}" "${*}"
+	printf '\033[0m[\033[36mNOTICE\033[0m] Setup [%s] \033[1;37m%s\033[0m\n' \
+		"${SCRIPT_NAME}" "${*}" > /dev/console
+}
+
+# Set hostname (defaults to "ubuntu")
+_set_hostname() {
+	NEW_HOST_NAME="${1:-ubuntu}"
+	_notice "Setting hostname to '${NEW_HOST_NAME}'"
+
+	# Set the hostname in "/etc/hostname"
+	echo "${NEW_HOST_NAME}" > "/etc/hostname"
+
+	# Setup a very basic "/etc/hosts" file
+	cat > "/etc/hosts" <<- EOF
+		127.0.0.1	localhost
+		127.0.1.1	${NEW_HOST_NAME}	${NEW_HOST_NAME}.local
+	EOF
+
+	# Remember this host name in this session
+	hostname "${NEW_HOST_NAME}"
+}

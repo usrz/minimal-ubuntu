@@ -1,8 +1,0 @@
-Package: minimal-os-setup
-Architecture: all
-Version: 1.0.5
-Priority: optional
-Section: admin
-Maintainer: Pier Fumagalli <pier@usrz.com>
-Homepage: https://github.com/usrz/minimal-ubuntu
-Description: Setup scripts for minimal-os packages
