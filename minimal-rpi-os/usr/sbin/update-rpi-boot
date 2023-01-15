@@ -1,0 +1,49 @@
+#!/bin/sh -e
+
+# Figure out the version, either specified on the command line
+# or derived from running "linux-version"
+if test -n "${1}"
+then
+	VERSION="${1}"
+else
+	VERSION="$(
+		linux-version list | \
+		xargs linux-version sort --reverse '0'\
+		head -1
+	)"
+	if "${VERSION}" = "0"
+	then
+		VERSION=""
+	fi
+fi
+
+# No version? No updates
+if test -z "${VERSION}"
+then
+	echo "No kernel version specified/found"
+	exit 1
+fi
+
+# Do our thing...
+echo "Setting Raspberry Pi boot kernel to ${VERSION}"
+
+echo "* Copying kernel..."
+cp "/boot/vmlinuz-${VERSION}" "/boot/rpi/kernel8.img"
+
+echo "* Copying ramdisk image..."
+cp "/boot/initrd.img-${VERSION}" "/boot/rpi/initrd.img"
+
+echo "* Copying broadcom firmware..."
+tar -C "/usr/lib/firmware/${VERSION}/device-tree/broadcom" -cf - . | \
+	tar -C "/boot/rpi" -xf -
+
+echo "* Copying overlay firmware..."
+tar -C "/usr/lib/firmware/${VERSION}/device-tree" -cf - overlays | \
+	tar -C "/boot/rpi" -xf -
+
+echo "* Copying raspberry firmware..."
+tar -C "/usr/lib/linux-firmware-raspi" -cf - . | \
+  tar -C "/boot/rpi" -xf -
+
+echo "* All done!"
+exit 0
