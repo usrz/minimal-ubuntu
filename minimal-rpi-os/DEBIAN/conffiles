@@ -1,5 +1,5 @@
-/boot/rpi/cmdline.txt
-/boot/rpi/config.txt
+/boot/cmdline.txt
+/boot/config.txt
 /etc/systemd/network/20-wired.network
 /etc/systemd/network/20-wireless.network
 /etc/udev/rules.d/50-brcmfmac.rules
