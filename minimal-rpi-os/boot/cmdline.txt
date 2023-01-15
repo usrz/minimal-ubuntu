@@ -1,7 +1,10 @@
-console=serial0,115200
-console=tty1
+# The root partition and filesystem type will be
+# automatically updated by "update-rpi-boot"
 root=/dev/mmcblk0p2
 rootfstype=ext4
+
+console=serial0,115200
+console=tty1
 elevator=deadline
 fsck.repair=yes
 rootwait
