@@ -10,6 +10,9 @@ findmnt -no PARTUUID,FSTYPE / | {
 		/boot/cmdline.txt
 }
 
+# Enable serial console
+systemctl enable "serial-getty@ttyS0.service"
+
 # Make sure we have the "gpio" group
 groupadd --force --system gpio
 usermod --append --groups gpio ubuntu
