@@ -52,7 +52,6 @@ echo "* Copying Raspberry Pi configuration..."
 cat > "/boot/rpi/config.txt" <<- EOF
 	# DO NOT MODIFY THIS FILE
 	# Update "/boot/config.txt" and run "update-rpi-boot"
-
 	EOF
 cat "/boot/config.txt" | grep -E -v '^(#|$)' >> "/boot/rpi/config.txt"
 
@@ -63,6 +62,16 @@ cat > "/boot/rpi/cmdline.txt" <<- EOF
 	# Update "/boot/cmdline.txt" and run "update-rpi-boot"
 	EOF
 cat "/boot/cmdline.txt" | grep -E -v '^(#|$)' >> "/boot/rpi/cmdline.txt"
+
+# Update  "cmdline.txt" with the current root partition and filesystem type
+echo "* Updating boot partition..."
+findmnt -no PARTUUID,FSTYPE / | {
+	read PARTUUID FSTYPE
+	sed -i -E \
+		-e "s|^root\s*=.*$|root=PARTUUID=${PARTUUID}|g" \
+		-e "s|^rootfstype\s*=.*$|rootfstype=${FSTYPE}|g" \
+		/boot/rpi/cmdline.txt
+}
 
 
 # All done?

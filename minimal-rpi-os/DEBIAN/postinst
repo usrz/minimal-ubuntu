@@ -1,15 +1,5 @@
 #!/bin/sh -e
 
-# Update our Raspberry Pi's "cmdline.txt" with the coorect (current) root
-# partition and filesystem type. This should really only happen once...
-findmnt -no PARTUUID,FSTYPE / | {
-	read PARTUUID FSTYPE
-	sed -i -E \
-		-e "s|^root\s*=.*$|root=PARTUUID=${PARTUUID}|g" \
-		-e "s|^rootfstype\s*=.*$|rootfstype=${FSTYPE}|g" \
-		/boot/cmdline.txt
-}
-
 # Enable serial console
 systemctl enable "serial-getty@ttyS0.service"
 
