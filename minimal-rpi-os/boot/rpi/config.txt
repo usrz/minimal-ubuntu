@@ -1,2 +1,11 @@
+# ============================================================================ #
+# Basic "config.txt" file for the Raspberry Pi                                 #
+# For the full documentation and all options, see                              #
+# https://www.raspberrypi.com/documentation/computers/config_txt.html          #
+# ============================================================================ #
+
+# Force the kernel loading system to assume a 64-bit kernel
 arm_64bit=1
+
+# Initial RAM filesystem filename and memory address
 initramfs initrd.img followkernel
