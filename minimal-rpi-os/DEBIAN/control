@@ -13,7 +13,5 @@ Depends: gpiod,
          minimal-os,
          rfkill,
          rpi-eeprom,
-         usb-modeswitch,
-         usbutils,
          wireless-regdb,
          wpasupplicant
