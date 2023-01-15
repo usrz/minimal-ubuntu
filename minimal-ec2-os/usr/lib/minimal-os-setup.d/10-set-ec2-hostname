@@ -4,7 +4,8 @@
 # Priority goes to the "Name" tag, otherwise to the default EC2 hostname
 METADATA_URL="http://169.254.169.254/latest/meta-data"
 HOSTNAME_FULL="$(curl -fs "${METADATA_URL}/tags/instance/Name" || true)"
-if test -z "${HOSTNAME_FULL}" ; then
+if test -z "${HOSTNAME_FULL}"
+then
 	HOSTNAME_FULL="$(curl -s "${METADATA_URL}/hostname" || true)"
 fi
 

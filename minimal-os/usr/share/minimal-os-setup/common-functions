@@ -2,7 +2,8 @@
 set -e
 
 # Check we are root
-if test "$(id -u)" -ne 0 ; then
+if test "$(id -u)" -ne 0
+then
 	echo "${0}: can only be run as root"
 	exit 1
 fi

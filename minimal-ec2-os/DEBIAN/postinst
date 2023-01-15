@@ -10,7 +10,8 @@ systemctl disable "getty@tty1.service"
 systemctl mask "getty@tty1.service"
 
 # Update "/etc/default/grub" if unmodified from the distribution
-if cmp --silent "/usr/share/grub/default/grub" "/etc/default/grub" ; then
+if cmp --silent "/usr/share/grub/default/grub" "/etc/default/grub"
+then
 	echo "Updating '/etc/default/grub'"
 	cat > "/etc/default/grub" <<- EOF
 		GRUB_DEFAULT=0

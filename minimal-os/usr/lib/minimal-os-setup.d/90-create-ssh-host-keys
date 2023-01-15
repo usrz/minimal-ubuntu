@@ -5,7 +5,8 @@
 _notice 'Generating SSH host keys'
 
 _create_host_key() {
-	if test -f "${1}" ; then
+	if test -f "${1}"
+	then
 		_notice "SSH host key file '${1}' exists, skipping..."
 	else
 		_notice "Generating SSH host key file '${1}', this may take some time ..."
