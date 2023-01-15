@@ -52,25 +52,18 @@ echo "* Copying Raspberry Pi configuration..."
 cat > "/boot/rpi/config.txt" <<- EOF
 	# DO NOT MODIFY THIS FILE
 	# Update "/boot/config.txt" and run "update-rpi-boot"
+
 	EOF
-cat "/boot/config.txt" >> "/boot/rpi/config.txt"
+cat "/boot/config.txt" | grep -E -v '^(#|$)' >> "/boot/rpi/config.txt"
 
 # Copy "cmdline.txt"
-echo "* Preparing kernel command line..."
+echo "* Copying Raspberry Pi kernel command line..."
 cat > "/boot/rpi/cmdline.txt" <<- EOF
 	# DO NOT MODIFY THIS FILE
 	# Update "/boot/cmdline.txt" and run "update-rpi-boot"
 	EOF
-cat "/boot/cmdline.txt" >> "/boot/rpi/cmdline.txt"
+cat "/boot/cmdline.txt" | grep -E -v '^(#|$)' >> "/boot/rpi/cmdline.txt"
 
-# Update "cmdline.txt" with the correct root filesystem parameters
-findmnt -no PARTUUID,FSTYPE / | {
-	read PARTUUID FSTYPE
-	sed -i -E \
-		-e "s|^root\s*=.*$|root=PARTUUID=${PARTUUID}|g" \
-		-e "s|^rootfstype\s*=.*$|rootfstype=${FSTYPE}|g" \
-		/boot/rpi/cmdline.txt
-}
 
 # All done?
 echo "* All done!"
