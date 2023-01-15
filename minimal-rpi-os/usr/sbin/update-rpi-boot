@@ -8,10 +8,10 @@ then
 else
 	VERSION="$(
 		linux-version list | \
-		xargs linux-version sort --reverse '0'\
-		head -1
+		xargs linux-version sort --reverse '0' | \
+		head -n1
 	)"
-	if "${VERSION}" = "0"
+	if test "${VERSION}" = "0"
 	then
 		VERSION=""
 	fi
@@ -27,12 +27,14 @@ fi
 # Do our thing...
 echo "Setting Raspberry Pi boot kernel to ${VERSION}"
 
+# Copy kernel and initial ram disk
 echo "* Copying kernel..."
 cp "/boot/vmlinuz-${VERSION}" "/boot/rpi/kernel8.img"
 
 echo "* Copying ramdisk image..."
 cp "/boot/initrd.img-${VERSION}" "/boot/rpi/initrd.img"
 
+# Copy firmware
 echo "* Copying broadcom firmware..."
 tar -C "/usr/lib/firmware/${VERSION}/device-tree/broadcom" -cf - . | \
 	tar -C "/boot/rpi" -xf -
@@ -45,5 +47,31 @@ echo "* Copying raspberry firmware..."
 tar -C "/usr/lib/linux-firmware-raspi" -cf - . | \
   tar -C "/boot/rpi" -xf -
 
+# Copy "config.txt"
+echo "* Copying Raspberry Pi configuration..."
+cat > "/boot/rpi/config.txt" <<- EOF
+	# DO NOT MODIFY THIS FILE
+	# Update "/boot/config.txt" and run "update-rpi-boot"
+	EOF
+cat "/boot/config.txt" >> "/boot/rpi/config.txt"
+
+# Copy "cmdline.txt"
+echo "* Preparing kernel command line..."
+cat > "/boot/rpi/cmdline.txt" <<- EOF
+	# DO NOT MODIFY THIS FILE
+	# Update "/boot/cmdline.txt" and run "update-rpi-boot"
+	EOF
+cat "/boot/cmdline.txt" >> "/boot/rpi/cmdline.txt"
+
+# Update "cmdline.txt" with the correct root filesystem parameters
+findmnt -no PARTUUID,FSTYPE / | {
+	read PARTUUID FSTYPE
+	sed -i -E \
+		-e "s|^root\s*=.*$|root=PARTUUID=${PARTUUID}|g" \
+		-e "s|^rootfstype\s*=.*$|rootfstype=${FSTYPE}|g" \
+		/boot/rpi/cmdline.txt
+}
+
+# All done?
 echo "* All done!"
 exit 0
