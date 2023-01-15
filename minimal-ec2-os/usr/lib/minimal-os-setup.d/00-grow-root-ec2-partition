@@ -5,10 +5,12 @@
 lsblk -no NAME,PKNAME "$(findmnt -no SOURCE /)" | {
 	read PART_DEV DISK
 	PART_NUM="$(cat /sys/class/block/${PART_DEV}/partition)"
-	if growpart -N "/dev/${DISK}" "${PART_NUM}" > /dev/null 2>&1
+	if growpart -N "/dev/${DISK}" "${PART_NUM}"
 	then
-		echo "* Growing ${PART_DEV} partition"
+		_notice "Growing '${PART_DEV}' root partition"
 		growpart "/dev/${DISK}" "${PART_NUM}"
 		resize2fs "/dev/${PART_DEV}"
+	else
+		_notice "Root partition '${PART_DEV}' can not be not grown"
 	fi
 }
