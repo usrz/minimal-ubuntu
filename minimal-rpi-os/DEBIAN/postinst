@@ -7,15 +7,12 @@ findmnt -no PARTUUID,FSTYPE / | {
 	sed -i -E \
 		-e "s|^root\s*=.*$|root=PARTUUID=${PARTUUID}|g" \
 		-e "s|^rootfstype\s*=.*$|rootfstype=${FSTYPE}|g" \
-		/boot/rpi/cmdline.txt
+		/boot/cmdline.txt
 }
 
 # Make sure we have the "gpio" group
-groupadd -r gpio
-usermod -aG gpio ubuntu
+groupadd --force --system gpio
+usermod --append --groups gpio ubuntu
 
 # Prepare the system for booting
-if ! test -f "/boot/rpi/kernel8.img"
-then
-	update-rpi-boot || true
-fi
+update-rpi-boot || true
