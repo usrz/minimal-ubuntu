@@ -1,5 +1,9 @@
-Minimal Ubuntu
-==============
+Installing a minimal version of Ubuntu
+======================================
+
+This guide will walk you through the process of installing a minimal version of
+Ubuntu 22.04 (Jammy) on various types of systems that support UEFI (including
+creating AMIs for EC2 instances) or Raspberry Pis.
 
 * [Required packages](#required-packages)
 * [Preparing the volume](#preparing-the-volume)
@@ -28,9 +32,14 @@ Minimal Ubuntu
 Required packages
 =================
 
-To follow this document, we'll need few packages installed, namely `parted`
-to partition volumes, `debootstrap` to install the base system, and `zerofree`
-to clean up the volume prior to snapshotting / imaging:
+Before we begin, it's important to make sure you have the necessary packages
+installed. This guide requires the use of:
+
+* `parted` to partition volumes
+* `dedebootstrap` to bootstrap the operationg system
+* `zerofree` to optionally clean up volumes after installation.
+
+You can install these packages by running the following command:
 
 ```shell
 apt-get update && apt-get install --yes parted debootstrap zerofree
@@ -41,16 +50,14 @@ apt-get update && apt-get install --yes parted debootstrap zerofree
 Preparing the volume
 ====================
 
-Regardless of what kind of system you're trying to install, we'll need an empty
-volume to start the initial installation process.
-
-Ultimately, the root volume's device needs to be set as the `BASE_DEV`
-environment variable.
+Regardless of what kind of system you're trying to install, you will need an
+empty volume to install Ubuntu. You will need to set the root volume's device
+as the `BASE_DEV` environment variable.
 
 
 ### Normal volume
 
-If targeting a normal device we can simply export the `BASE_DEV` environment
+If targeting a normal device you can simply export the `BASE_DEV` environment
 variable directly:
 
 ```shell
@@ -61,15 +68,15 @@ export BASE_DEV=/dev/sdb
 
 ### Disk image
 
-If we want to create an image to be later written to an SD card or USB stick,
-(think _Raspberry Pi_) we need to first create the image file:
+If you want to create an image to be later written to an SD card or USB stick,
+(think Raspberry Pi) you need to first create the image file:
 
 ```shell
 # Create a simple image file, 4Gb will suffice for this install
 dd if="/dev/zero" of="/raspberry-os.img" bs=4M count=1024 conv=fsync status=progress
 ```
 
-Then we can use the loopback interface to use the image as a normal disk:
+Then you can use the loopback interface to use the image as a normal disk:
 
 ```shell
 # Find our first available "loopback" device and use it as our BASE_DEV
@@ -98,10 +105,10 @@ export BASE_DEV=/dev/nvme1n1
 Partitioning the volume
 =======================
 
-We want to create two partitions on the disk: a small (256 MiB) FAT32 partition
-for boot, and the rest of the as our EXT4 root volume.
+We will create two partitions on the disk: a small (256 MiB) FAT32 partition
+for `boot` and the rest of the space as our EXT4 `root` volume.
 
-We can use `parted` to simply create a basic partition layout.
+You can use `parted` to simply create a basic partition layout.
 
 
 ### GPT and UEFI
@@ -139,8 +146,12 @@ parted -s "${BASE_DEV}" set 1 boot on
 Formatting and mounting
 =======================
 
-Take quick break, sometimes it takes a second or two for the kernel to populate
-the device tree... Then let's figure out the partitions UUIDs and devices:
+Before moving on to the next step, it's important to give the system a moment
+to populate the device tree. This process may take a second or two.
+
+Once the kernel has finished re-populating the device tree, we can proceed to
+identify the UUIDs and devices of our partitions. To do this, we will use the
+following commands:
 
 ```shell
 # Find the UUID and device of the boot partition
@@ -152,7 +163,11 @@ export ROOT_UUID="$(partx -go UUID -n 2 "${BASE_DEV}")"
 export ROOT_DEV="$(realpath /dev/disk/by-partuuid/"${ROOT_UUID}")"
 ```
 
-Then create our file systems:
+With our partition UUIDs and devices identified, we can now format and mount
+our file systems.
+
+We'll need to format the `boot` partition as `FAT32` and the `root` partition
+as `EXT4`. To do so, use the following command:
 
 ```shell
 mkfs.fat -F32 "${BOOT_DEV}"
@@ -162,7 +177,7 @@ mkfs.ext4 -F "${ROOT_DEV}"
 
 ### Mounting partitions for UEFI systems
 
-We'll mount the root partition under `/mnt` and for UEFI systems, the boot
+We'll mount the root partition under `/mnt` and (for UEFI systems) the boot
 partition will be mounted under `/mnt/boot/efi`:
 
 ```shell
@@ -174,7 +189,7 @@ mount  "${BOOT_DEV}" /mnt/boot/efi
 
 ### Mounting partitions for Raspberry Pi
 
-We'll mount the root partition under `/mnt` and for the Raspberry Pi, the
+We'll mount the root partition under `/mnt` and (for the Raspberry Pi), the
 mountpoints of our boot partition is `/mnt/boot/rpi`::
 
 ```shell
