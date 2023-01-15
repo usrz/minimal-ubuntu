@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -e
 . /usr/share/minimal-os-setup/common-functions
 
 # Make sure SSH has all the keys

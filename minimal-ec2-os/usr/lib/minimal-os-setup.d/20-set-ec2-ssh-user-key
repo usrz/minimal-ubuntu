@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -e
 . /usr/share/minimal-os-setup/common-functions
 
 _notice "Downloading EC2 SSH key for user 'ubuntu'"

@@ -1,5 +1,4 @@
-#!/bin/sh
-set -e
+#!/bin/sh -e
 
 # Update locale if unset in /etc/default/locale
 grep -q '^LANGUAGE' '/etc/default/locale' || {

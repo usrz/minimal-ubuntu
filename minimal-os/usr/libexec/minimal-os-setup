@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -e
 . /usr/share/minimal-os-setup/common-functions
 
 # Run the scripts one by one

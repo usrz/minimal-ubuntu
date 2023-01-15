@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -e
 . /usr/share/minimal-os-setup/common-functions
 
 # Priority goes to the "Name" tag, otherwise to the default EC2 hostname
