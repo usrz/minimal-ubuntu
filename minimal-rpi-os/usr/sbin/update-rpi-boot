@@ -29,39 +29,39 @@ echo "Setting Raspberry Pi boot kernel to ${VERSION}"
 
 # Copy kernel and initial ram disk
 echo "* Copying kernel..."
-cp "/boot/vmlinuz-${VERSION}" "/boot/rpi/kernel8.img"
+cp "/boot/vmlinuz-${VERSION}" "/boot/firmware/kernel8.img"
 
 echo "* Copying ramdisk image..."
-cp "/boot/initrd.img-${VERSION}" "/boot/rpi/initrd.img"
+cp "/boot/initrd.img-${VERSION}" "/boot/firmware/initrd.img"
 
 # Copy firmware
 echo "* Copying broadcom firmware..."
 tar -C "/usr/lib/firmware/${VERSION}/device-tree/broadcom" -cf - . | \
-	tar -C "/boot/rpi" -xf -
+	tar -C "/boot/firmware" -xf -
 
 echo "* Copying overlay firmware..."
 tar -C "/usr/lib/firmware/${VERSION}/device-tree" -cf - overlays | \
-	tar -C "/boot/rpi" -xf -
+	tar -C "/boot/firmware" -xf -
 
 echo "* Copying raspberry firmware..."
 tar -C "/usr/lib/linux-firmware-raspi" -cf - . | \
-  tar -C "/boot/rpi" -xf -
+  tar -C "/boot/firmware" -xf -
 
 # Copy "config.txt"
 echo "* Copying Raspberry Pi configuration..."
-cat > "/boot/rpi/config.txt" <<- EOF
+cat > "/boot/firmware/config.txt" <<- EOF
 	# DO NOT MODIFY THIS FILE
 	# Update "/boot/config.txt" and run "update-rpi-boot"
 	EOF
-cat "/boot/config.txt" | grep -E -v '^(#|$)' >> "/boot/rpi/config.txt"
+cat "/boot/config.txt" | grep -E -v '^(#|$)' >> "/boot/firmware/config.txt"
 
 # Copy "cmdline.txt"
 echo "* Copying Raspberry Pi kernel command line..."
-cat > "/boot/rpi/cmdline.txt" <<- EOF
+cat > "/boot/firmware/cmdline.txt" <<- EOF
 	# DO NOT MODIFY THIS FILE
 	# Update "/boot/cmdline.txt" and run "update-rpi-boot"
 	EOF
-cat "/boot/cmdline.txt" | grep -E -v '^(#|$)' >> "/boot/rpi/cmdline.txt"
+cat "/boot/cmdline.txt" | grep -E -v '^(#|$)' >> "/boot/firmware/cmdline.txt"
 
 # Update  "cmdline.txt" with the current root partition and filesystem type
 echo "* Updating boot partition..."
@@ -70,7 +70,7 @@ findmnt -no PARTUUID,FSTYPE / | {
 	sed -i -E \
 		-e "s|^root\s*=.*$|root=PARTUUID=${PARTUUID}|g" \
 		-e "s|^rootfstype\s*=.*$|rootfstype=${FSTYPE}|g" \
-		/boot/rpi/cmdline.txt
+		/boot/firmware/cmdline.txt
 }
 
 
