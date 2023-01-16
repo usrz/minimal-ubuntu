@@ -10,6 +10,12 @@ lsblk -no NAME,PKNAME "$(findmnt -no SOURCE /)" | {
 		_notice "Growing '${PART_DEV}' root partition"
 		growpart "/dev/${DISK}" "${PART_NUM}"
 		resize2fs "/dev/${PART_DEV}"
+
+		stat -f -c '%a %S' / | {
+			read BLOCKS BLOCK_SIZE
+			SIZE_GIGS="$(expr ${BLOCKS} \* ${BLOCK_SIZE} / 1073741824)"
+			_notice "Partition '${PART_DEV}' grown to ${SIZE_GIGS}GiB"
+		}
 	else
 		_notice "Root partition '${PART_DEV}' can not be not grown"
 	fi
