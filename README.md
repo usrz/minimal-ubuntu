@@ -147,7 +147,7 @@ Formatting and mounting
 =======================
 
 Before moving on to the next step, it's important to give the system a moment
-to populate the device tree. This process may take a second or two.
+to populate the device tree. This may take a second or two.
 
 Once the kernel has finished re-populating the device tree, we can proceed to
 identify the UUIDs and devices of our partitions. To do this, we will use the
@@ -177,7 +177,7 @@ mkfs.ext4 -F "${ROOT_DEV}"
 
 ### Mounting partitions for UEFI systems
 
-We'll mount the root partition under `/mnt` and (for UEFI systems) the boot
+For UEFI systems we'll mount the root partition under `/mnt` and the boot
 partition will be mounted under `/mnt/boot/efi`:
 
 ```shell
@@ -189,13 +189,14 @@ mount  "${BOOT_DEV}" /mnt/boot/efi
 
 ### Mounting partitions for Raspberry Pi
 
-We'll mount the root partition under `/mnt` and (for the Raspberry Pi), the
-mountpoints of our boot partition is `/mnt/boot/rpi`::
+On the other hand, for the Raspberry Pi, we'll mount similarly the root
+partition under `/mnt` and, but the mountpoint of our boot partition is
+`/mnt/boot/firmware`:
 
 ```shell
 mount "${ROOT_DEV}" /mnt
-mkdir -p /mnt/boot/rpi
-mount  "${BOOT_DEV}" /mnt/boot/rpi
+mkdir -p /mnt/boot/firmware
+mount  "${BOOT_DEV}" /mnt/boot/firmware
 ```
 
 
@@ -206,14 +207,12 @@ Minimal OS packages
 > TODO: we need to set up our APT repo to download the packages
 >
 > ```shell
-> curl -L -o '/mnt/minimal-os-setup.deb' \
->   'https://github.com/usrz/minimal-ubuntu/releases/download/v1.0.4/minimal-os-setup_1.0.4_all.deb'
 > curl -L -o '/mnt/minimal-os.deb' \
 >   'https://github.com/usrz/minimal-ubuntu/releases/download/v1.0.4/minimal-os_1.0.4_all.deb'
 > curl -L -o '/mnt/minimal-ec2-os.deb' \
 >  'https://github.com/usrz/minimal-ubuntu/releases/download/v1.0.4/minimal-ec2-os_1.0.4_all.deb'
-> curl -L -o '/mnt/minimal-rpo-os.deb' \
->  'https://github.com/usrz/minimal-ubuntu/releases/download/v1.0.4/minimal-rpi-os_1.0.4_all.deb'
+> curl -L -o '/mnt/minimal-rpi-os.deb' \
+>  'https://github.com/usrz/minimal-ubuntu/releases/download/v1.0.4/minimal-rpi-os_1.0.4_arm64.deb'
 > ```
 
 
@@ -221,9 +220,9 @@ Minimal OS packages
 Architecture and repository URL
 ===============================
 
-To bootstrap the system, we need to find the correct URL of the Ubuntu
-repository we want to fetch our packages from, and the architecture of the
-system we are trying to install.
+To bootstrap the system, you will need to find the correct URL of the Ubuntu
+repository to fetch packages from, and the architecture of the system you are
+going to install.
 
 We export this into the `REPO_URL` and `TARGET_ARCH` environment variables.
 
@@ -231,17 +230,17 @@ Remember, Raspberry Pis, AWS Graviton instances, M1/M2 Macs are ARM64!
 
 ### Ubuntu repositories
 
-Normally we want to use a local mirror of the Ubuntu repositories, in our case
-we're in Germany, so we'll use the `de` mirrors.
+Normally you will want to use a local mirror of the Ubuntu repositories. In
+my case (Germany), I'll use the `de` mirror.
 
-In our case, for `ARM64`, the repository base URL will be:
+For `ARM64`, the repository base URL will be:
 
 ```shell
 export REPO_URL="http://de.ports.ubuntu.com/ubuntu-ports"
 export TARGET_ARCH="arm64"
 ```
 
-While for `X86_64` the repository base URL will be:
+For `X86_64` the repository base URL will be:
 
 ```shell
 export REPO_URL="http://de.archive.ubuntu.com/ubuntu"
@@ -250,8 +249,8 @@ export TARGET_ARCH="amd64"
 
 ### AWS repositories
 
-AWS provides mirrors of the various Ubuntu repositories per region, so we can
-use those for speed. We can get the region calling:
+Canonical provides mirrors of the various Ubuntu repositories in each AWS
+region, so you can use those for speed. You can get the region calling:
 
 ```shell
 export AWS_REGION="$(curl --silent http://169.254.169.254/latest/meta-data/placement/region)"
@@ -359,7 +358,7 @@ export APT_OPTIONS="\
 
 apt-get $APT_OPTIONS update && \
   apt-get $APT_OPTIONS --yes dist-upgrade && \
-  apt-get $APT_OPTIONS --yes install /minimal-os-setup.deb /minimal-os.deb
+  apt-get $APT_OPTIONS --yes install /minimal-os.deb
 ```
 
 Then for sanity's sake, let's keep only the `minimal-os` package marked as
@@ -369,23 +368,6 @@ _manually installed_ (this will help with `apt-get autoremove`):
 apt-mark showmanual | xargs apt-mark auto
 apt-mark manual minimal-os
 ```
-
-
-### User login
-
-The `minimal-os` package installs the `ubuntu` user by default. If you need
-to log in interactively (e.g. from the console) set the password now:
-
-```shell
-passwd ubuntu
-```
-
-If you need SSH access, we only allow SSH keys. Place the authorized SSH public
-key in `/home/ubuntu/.ssh/authorized_keys`.
-
-Finally, we allow **password-less sudo** for the `ubuntu` user. If this is not
-to your liking, take a peek at the `/etc/sudoers.d/00-minimal-os` file.
-
 
 
 Kernel and helper packages
@@ -415,7 +397,7 @@ update-grub
 ### Raspberry Pi kernel
 
 For the Raspberry Pi, we don't need a boot loader, and the `minimal-rpi-os` will
-take care of preparing the `/boot/rpi` filesystem for booting:
+take care of preparing the `/boot/firmware` filesystem for booting:
 
 ```shell
 apt-get --yes install linux-raspi /minimal-rpi-os.deb
@@ -445,6 +427,27 @@ EOF
 grub-install "${BASE_DEV}"
 update-grub
 ```
+
+
+
+User login
+==========
+
+The `minimal-os` package installs the `ubuntu` user. If you need to log in interactively (e.g. from the console) set the password now:
+
+```shell
+passwd ubuntu
+```
+
+If you need SSH access, we only allow SSH keys. Place the authorized SSH public
+key in `/home/ubuntu/.ssh/authorized_keys`.
+
+> **NOTE**: If you are in EC2-land
+>
+>
+
+Finally, we allow **password-less sudo** for the `ubuntu` user. If this is not
+to your liking, take a peek at the `/etc/sudoers.d/00-minimal-os` file.
 
 
 
