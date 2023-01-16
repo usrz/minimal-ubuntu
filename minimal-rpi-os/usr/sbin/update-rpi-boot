@@ -48,31 +48,20 @@ tar -C "/usr/lib/linux-firmware-raspi" -cf - . | \
   tar -C "/boot/firmware" -xf -
 
 # Copy "config.txt"
-echo "* Copying Raspberry Pi configuration..."
-cat > "/boot/firmware/config.txt" <<- EOF
-	# DO NOT MODIFY THIS FILE
-	# Update "/boot/config.txt" and run "update-rpi-boot"
-	EOF
-cat "/boot/config.txt" | grep -E -v '^(#|$)' >> "/boot/firmware/config.txt"
+echo "* Preparing Raspberry Pi configuration..."
+cat "/boot/config.txt" | grep -E -v '^(#|\s*$)' > "/boot/firmware/config.txt"
 
 # Copy "cmdline.txt"
-echo "* Copying Raspberry Pi kernel command line..."
-cat > "/boot/firmware/cmdline.txt" <<- EOF
-	# DO NOT MODIFY THIS FILE
-	# Update "/boot/cmdline.txt" and run "update-rpi-boot"
-	EOF
-cat "/boot/cmdline.txt" | grep -E -v '^(#|$)' >> "/boot/firmware/cmdline.txt"
-
-# Update  "cmdline.txt" with the current root partition and filesystem type
-echo "* Updating boot partition..."
+echo "* Preparing Raspberry Pi kernel command line..."
 findmnt -no PARTUUID,FSTYPE / | {
 	read PARTUUID FSTYPE
-	sed -i -E \
-		-e "s|^root\s*=.*$|root=PARTUUID=${PARTUUID}|g" \
-		-e "s|^rootfstype\s*=.*$|rootfstype=${FSTYPE}|g" \
-		/boot/firmware/cmdline.txt
-}
-
+	echo "root=PARTUUID=${PARTUUID}"
+	echo "rootfstype=${FSTYPE}"
+	cat "/boot/cmdline.txt" | \
+		sed 's|#.*$||g' | \
+		grep -v -E '^\s*$' | \
+		grep -v -E '^root(fstype)?=.*'
+} | paste -s -d ' ' > "/boot/firmware/cmdline.txt"
 
 # All done?
 echo "* All done!"
