@@ -9,3 +9,6 @@ arm_64bit=1
 
 # Initial RAM filesystem filename and memory address
 initramfs initrd.img followkernel
+
+# Load up the USB controller driver
+dtoverlay=dwc2
