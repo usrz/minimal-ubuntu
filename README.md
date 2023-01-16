@@ -170,7 +170,7 @@ We'll need to format the `boot` partition as `FAT32` and the `root` partition
 as `EXT4`. To do so, use the following command:
 
 ```shell
-mkfs.fat -F32 "${BOOT_DEV}"
+mkfs.fat -n "UBUNTU_BOOT" -F 32 "${BOOT_DEV}"
 mkfs.ext4 -F "${ROOT_DEV}"
 ```
 
