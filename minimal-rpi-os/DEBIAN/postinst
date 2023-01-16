@@ -1,7 +1,11 @@
 #!/bin/sh -e
 
 # Enable serial console
-systemctl enable "serial-getty@ttyS0.service"
+systemctl enable "serial-getty@ttyGS0.service"
+
+# Enable wpa-supplicant (for wifi)
+systemctl enable wpa_supplicant
+systemctl enable wpa_supplicant@wlan0
 
 # Make sure we have the "gpio" group
 groupadd --force --system gpio
