@@ -1,6 +1,6 @@
 Package: minimal-os
 Architecture: all
-Version: 1.0.5
+Version: 2.0.0
 Priority: optional
 Section: metapackages
 Maintainer: Pier Fumagalli <pier@usrz.com>
