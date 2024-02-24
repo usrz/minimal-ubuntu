@@ -479,15 +479,18 @@ At this point we can simply unmount our volume:
 umount -Rlf /mnt
 ```
 
-
-Creating an AMI
----------------
-
-First of all clean out any unused block in our root filesystem:
+If needed (for example in case of an EC2 volume to create an AMI, or a disk
+image for a Raspberry Pi) we can clean out any unused block in our root
+filesystem:
 
 ```shell
 zerofree -v "${ROOT_DEV}"
 ```
+
+
+### Creating an AMI
+
+First of all clean out any unused block in our root filesystem:
 
 Going back to the EC2 console we can now detach the volume we created from the
 EC2 instance we used for setup, and create a snapshot from it.
@@ -501,3 +504,22 @@ Remember to select the following:
 * _Root device name_: always `/dev/sda1`
 * _Virtualization type_: always `Hardware-assisted virtualization`
 * _Boot mode_: always `UEFI`
+
+
+### Raspberry Pi image
+
+Remeber to detach the loopback device of our image, first:
+
+```shell
+losetup -d ${BASE_DEV}
+```
+
+Then you can use `dd` to write the image on an SD card or USB drive.
+
+Remember, if you're doing this process on a Mac, using `/dev/rdiskX` is a lot
+faster than using `/dev/diskX`, so, depending on what device your SD card or
+USB drive maps to, use something like this:
+
+```shell
+sudo dd if="raspberry-os.img" of="/dev/rdisk10" bs=4M conv=fsync status=progress
+```
