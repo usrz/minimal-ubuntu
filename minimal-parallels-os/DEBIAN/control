@@ -7,6 +7,7 @@ Maintainer: Pier Fumagalli <pier@usrz.com>
 Homepage: https://github.com/usrz/minimal-ubuntu
 Description: A minimal base package for Ubuntu on Parallels Desktop
 Depends: binfmt-support,
+         build-essential,
          dkms,
          grub-efi,
          libelf-dev,
