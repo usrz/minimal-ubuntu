@@ -8,5 +8,6 @@ Homepage: https://github.com/usrz/minimal-ubuntu
 Description: A minimal base package for Ubuntu on Parallels Desktop
 Depends: binfmt-support,
          dkms,
+         grub-efi,
          libelf-dev,
          minimal-os
