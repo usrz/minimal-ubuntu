@@ -2,8 +2,8 @@ Installing a minimal version of Ubuntu
 ======================================
 
 This guide will walk you through the process of installing a minimal version of
-Ubuntu 22.04 (Jammy) on various types of systems that support UEFI (including
-creating AMIs for EC2 instances) or Raspberry Pis.
+Ubuntu 24.04 (Noble Numbat) on various types of systems that support UEFI
+(including creating AMIs for EC2 instances) or Raspberry Pis.
 
 * [Required packages](#required-packages)
 * [Preparing the volume](#preparing-the-volume)
@@ -278,7 +278,7 @@ Bootstrapping the system
 Now we can simply use `debootstrap` to install the basics of the OS:
 
 ```shell
-debootstrap --arch="${TARGET_ARCH}" --variant=minbase --include=systemd jammy /mnt "${REPO_URL}"
+debootstrap --arch="${TARGET_ARCH}" --variant=minbase --include=systemd noble /mnt "${REPO_URL}"
 ```
 
 Once `debootstrap` is finished, we can mount the various filesystems required by
@@ -336,9 +336,9 @@ We then need to prepare our sources list for APT in `/etc/apt/sources.list`:
 
 ```shell
 cat > "/etc/apt/sources.list" << EOF
-deb ${REPO_URL} jammy main restricted universe multiverse
-deb ${REPO_URL} jammy-updates main restricted universe multiverse
-deb ${REPO_URL} jammy-security main restricted universe multiverse
+deb ${REPO_URL} noble main restricted universe multiverse
+deb ${REPO_URL} noble-updates main restricted universe multiverse
+deb ${REPO_URL} noble-security main restricted universe multiverse
 EOF
 ```
 
