@@ -208,11 +208,11 @@ Minimal OS packages
 >
 > ```shell
 > curl -L -o '/mnt/minimal-os.deb' \
->   'https://github.com/usrz/minimal-ubuntu/releases/download/v1.0.4/minimal-os_1.0.4_all.deb'
+>   'https://github.com/usrz/minimal-ubuntu/releases/download/v2.0.0/minimal-os_2.0.0_all.deb'
 > curl -L -o '/mnt/minimal-ec2-os.deb' \
->  'https://github.com/usrz/minimal-ubuntu/releases/download/v1.0.4/minimal-ec2-os_1.0.4_all.deb'
+>  'https://github.com/usrz/minimal-ubuntu/releases/download/v2.0.0/minimal-ec2-os_2.0.0_all.deb'
 > curl -L -o '/mnt/minimal-rpi-os.deb' \
->  'https://github.com/usrz/minimal-ubuntu/releases/download/v1.0.4/minimal-rpi-os_1.0.4_arm64.deb'
+>  'https://github.com/usrz/minimal-ubuntu/releases/download/v2.0.0/minimal-rpi-os_2.0.0_arm64.deb'
 > ```
 
 
