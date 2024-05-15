@@ -29,4 +29,5 @@ Depends: apt-utils,
          systemd-sysv,
          systemd-timesyncd,
          vim,
-         whiptail
+         whiptail,
+         zstd
