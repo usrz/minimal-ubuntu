@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh -e
 
 # Update locale if unset in /etc/default/locale
 grep -q '^LANGUAGE' '/etc/default/locale' || {
@@ -13,3 +13,42 @@ grep -q 'enable-bracketed-paste' '/etc/inputrc' || {
 	echo '# Disable "bracketed paste"' >> '/etc/inputrc'
 	echo 'set enable-bracketed-paste off' >> '/etc/inputrc'
 }
+
+# Enable systemd-timesyncd using AWS's NTP server
+sed -i -E \
+	-e 's|^#NTP=.*$|NTP=pool.ntp.org|g' \
+	/etc/systemd/timesyncd.conf
+systemctl enable systemd-timesyncd
+
+# Enable systemd-(networkd|resolved) based networking
+sed -i -E \
+	-e 's|^#Cache=.*$|Cache=no|g' \
+	-e 's|^#LLMNR=.*$|LLMNR=no|g' \
+	-e 's|^#MulticastDNS=.*$|MulticastDNS=no|g' \
+	-e 's|^#DNSStubListener=.*$|DNSStubListener=no|g' \
+	-e 's|^#FallbackDNS=.*$|FallbackDNS=1.1.1.1|g' \
+	/etc/systemd/resolved.conf
+systemctl enable systemd-networkd
+systemctl enable systemd-resolved
+
+# Disable SSH password-based login
+sed -i -E \
+  -e 's/^#\s*PasswordAuthentication\s+.*$/PasswordAuthentication no/g' \
+  /etc/ssh/sshd_config
+
+# Make sure we have the "ubuntu" user setup
+id ubuntu > /dev/null 2>&1 || {
+	adduser --disabled-password \
+		--home /home/ubuntu \
+		--shell /bin/bash \
+		--gecos 'Ubuntu User' \
+		ubuntu
+
+		mkdir -p -m 700 /home/ubuntu/.ssh
+		touch /home/ubuntu/.ssh/authorized_keys
+		chmod 600 /home/ubuntu/.ssh/authorized_keys
+		chown -R ubuntu:ubuntu /home/ubuntu/.ssh
+}
+
+# Enable "minimal-os-setup" to trigger SSH host key generation on first boot
+systemctl enable minimal-os-setup 2> /dev/null || true

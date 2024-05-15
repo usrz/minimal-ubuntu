@@ -1,0 +1,8 @@
+#!/bin/sh -e
+. /usr/share/minimal-os-setup/common-functions
+
+_notice "Downloading EC2 SSH key for user 'ubuntu'"
+mkdir -p /home/ubuntu/.ssh
+curl -s "http://169.254.169.254/latest/meta-data/public-keys/0/openssh-key" > /home/ubuntu/.ssh/authorized_keys
+chown -R ubuntu:ubuntu /home/ubuntu
+chmod -R go-rwx /home/ubuntu/.ssh

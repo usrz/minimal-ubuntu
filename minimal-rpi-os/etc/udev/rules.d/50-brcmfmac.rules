@@ -1,0 +1,1 @@
+SUBSYSTEM=="net", DRIVERS=="brcmfmac", ACTION=="add", RUN+="/usr/sbin/iw '%E{INTERFACE}' set power_save off"

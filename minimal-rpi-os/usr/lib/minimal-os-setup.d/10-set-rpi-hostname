@@ -1,0 +1,6 @@
+#!/bin/sh -e
+. /usr/share/minimal-os-setup/common-functions
+
+# Set the hostname to "rpi-...serial..."
+RPI_SERIAL="$(cat /proc/cpuinfo | grep '^Serial' | grep -o '.\{6\}$')"
+_set_hostname "rpi-${RPI_SERIAL:-000000}"

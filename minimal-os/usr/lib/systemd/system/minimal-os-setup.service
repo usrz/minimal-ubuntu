@@ -1,0 +1,11 @@
+[Unit]
+Description=Minimal OS Initial Setup Service
+Requires=network-online.target
+Before=ssh.service
+
+[Service]
+ExecStart=/usr/libexec/minimal-os-setup
+Type=oneshot
+
+[Install]
+WantedBy=multi-user.target

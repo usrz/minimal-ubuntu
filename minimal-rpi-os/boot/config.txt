@@ -1,0 +1,21 @@
+# ============================================================================ #
+# Basic "config.txt" file for the Raspberry Pi                                 #
+# ---------------------------------------------------------------------------- #
+# This file is the template that will be used by "update-rpi-boot" to create   #
+# the final boot configuration file in "/boot/firmware/config.txt".            #
+#                                                                              #
+# For the full documentation and all options, see                              #
+# https://www.raspberrypi.com/documentation/computers/config_txt.html          #
+# ============================================================================ #
+
+# Force the kernel loading system to assume a 64-bit kernel
+arm_64bit=1
+
+# Initial RAM filesystem filename and memory address
+initramfs initrd.img followkernel
+
+# Load up the USB controller driver
+dtoverlay=dwc2
+
+# Disable the rainbow screen
+disable_splash=1

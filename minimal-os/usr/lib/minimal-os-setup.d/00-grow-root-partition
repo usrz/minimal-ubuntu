@@ -1,0 +1,22 @@
+#!/bin/sh -e
+. /usr/share/minimal-os-setup/common-functions
+
+# Attempt to grow the root partition with "growpart"
+lsblk -no NAME,PKNAME "$(findmnt -no SOURCE /)" | {
+	read PART_DEV DISK
+	PART_NUM="$(cat /sys/class/block/${PART_DEV}/partition)"
+	if growpart -N "/dev/${DISK}" "${PART_NUM}"
+	then
+		_notice "Growing '${PART_DEV}' root partition"
+		growpart "/dev/${DISK}" "${PART_NUM}"
+		resize2fs "/dev/${PART_DEV}"
+
+		stat -f -c '%a %S' / | {
+			read BLOCKS BLOCK_SIZE
+			SIZE_GIGS="$(expr ${BLOCKS} \* ${BLOCK_SIZE} / 1073741824)"
+			_notice "Partition '${PART_DEV}' grown to ${SIZE_GIGS}GiB"
+		}
+	else
+		_notice "Root partition '${PART_DEV}' can not be not grown"
+	fi
+}

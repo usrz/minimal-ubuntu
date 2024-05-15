@@ -1,34 +1,25 @@
-#!/bin/bash
+#!/bin/sh -e
 
-# Possibly run setup on first boot of the machine
-systemctl enable minimal-ec2-os-setup
-
-# Make sure we have the "ubuntu" user setup
-id ubuntu > /dev/null 2>&1 || {
-	adduser --disabled-password \
-		--home /home/ubuntu \
-		--shell /bin/bash \
-		--gecos 'Ubuntu User' \
-		 ubuntu
-}
-
-# Enable systemd-timesyncd using AWS's NTP server
+# Fix the NTP server to AWS' own EC2 NTP server
 sed -i -E 's|^#?NTP=.*$|NTP=169.254.169.123|g' /etc/systemd/timesyncd.conf
-systemctl enable systemd-timesyncd
-
-# Enable systemd-(networkd|resolved) based networking
-sed -i -E \
-	-e 's|^#?Cache=.*$|Cache=no|g' \
-	-e 's|^#?LLMNR=.*$|LLMNR=no|g' \
-	-e 's|^#?MulticastDNS=.*$|MulticastDNS=no|g' \
-	-e 's|^#?DNSStubListener=.*$|DNSStubListener=no|g' \
-	-e 's|^#?FallbackDNS=.*$|FallbackDNS=8.8.8.8 1.1.1.1|g' \
-	/etc/systemd/resolved.conf
-ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf
-systemctl enable systemd-networkd
-systemctl enable systemd-resolved
 
 # Mask/disable TTYs on console and enable serial
 systemctl enable "serial-getty@ttyS0.service"
 systemctl disable "getty@tty1.service"
 systemctl mask "getty@tty1.service"
+
+# Update "/etc/default/grub" if unmodified from the distribution
+if cmp --silent "/usr/share/grub/default/grub" "/etc/default/grub"
+then
+	echo "Updating '/etc/default/grub'"
+	cat > "/etc/default/grub" <<- EOF
+		GRUB_DEFAULT=0
+		GRUB_TIMEOUT=0
+		GRUB_TIMEOUT_STYLE="hidden"
+		GRUB_CMDLINE_LINUX_DEFAULT="nomodeset console=tty1 console=ttyS0"
+		GRUB_DISTRIBUTOR="Minimal Ubuntu OS"
+	EOF
+fi
+
+# Enable "minimal-os-setup" to run on first boot
+systemctl enable minimal-os-setup 2> /dev/null || true

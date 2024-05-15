@@ -1,5 +1,0 @@
-GRUB_DEFAULT=0
-GRUB_TIMEOUT=0
-GRUB_TIMEOUT_STYLE="hidden"
-GRUB_CMDLINE_LINUX_DEFAULT="nomodeset console=tty1 console=ttyS0"
-GRUB_DISTRIBUTOR="Minimal Ubuntu OS"

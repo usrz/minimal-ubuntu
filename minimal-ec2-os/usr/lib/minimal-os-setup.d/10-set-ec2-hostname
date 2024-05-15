@@ -1,0 +1,21 @@
+#!/bin/sh -e
+. /usr/share/minimal-os-setup/common-functions
+
+# Priority goes to the "Name" tag, otherwise to the default EC2 hostname
+METADATA_URL="http://169.254.169.254/latest/meta-data"
+HOSTNAME_FULL="$(curl -fs "${METADATA_URL}/tags/instance/Name" || true)"
+if test -z "${HOSTNAME_FULL}"
+then
+	HOSTNAME_FULL="$(curl -s "${METADATA_URL}/hostname" || true)"
+fi
+
+# Convert full host name to a short (sans domain, valid characters) host name
+HOSTNAME_SHORT="$(\
+	echo "${HOSTNAME_FULL:-ubuntu}" | \
+	tr -dc '[:alnum:]-. ' | \
+	tr '[:upper:] ' '[:lower:]-' | \
+	cut -d. -f1 \
+)"
+
+# Simply set the hostname with our function
+_set_hostname "${HOSTNAME_SHORT}"

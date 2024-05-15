@@ -1,0 +1,34 @@
+# ============================================================================ #
+# Basic "cmdline.txt" file for the Raspberry Pi                                #
+# ---------------------------------------------------------------------------- #
+# This file is the template that will be used by "update-rpi-boot" to create   #
+# the final boot configuration file in "/boot/firmware/cmdline.txt".           #
+#                                                                              #
+# For sanity, here, the various options can be specified on different lines,   #
+# and the "update-rpi-boot" process will join those to generate the final      #
+# kernel command line.                                                         #
+#                                                                              #
+# The "root" and "rootfstype" options will be automatically injected by when   #
+# the final configuration file is created and should not be specified here     #
+# ============================================================================ #
+
+# Serial console
+console=serial0,115200
+
+# Default (HDMI console)
+console=tty1
+
+# Use the "deadline" disk sheduler
+elevator=deadline
+
+# Allow repairs of the filesystem
+fsck.repair=yes
+
+# Wait for the root device to appear
+rootwait
+
+# Do not set the framebuffer mode
+nomodeset
+
+# Do not display the Raspberry Pi logo
+logo.nologo

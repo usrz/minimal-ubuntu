@@ -1,8 +1,10 @@
 Package: minimal-ec2-os
 Architecture: all
-Version: 1.0.4
+Version: 2.0.0
 Priority: optional
 Section: metapackages
-Depends: cloud-guest-utils, fdisk, grub-efi, minimal-os
-Description: A minimal base package for Ubuntu on EC2
 Maintainer: Pier Fumagalli <pier@usrz.com>
+Homepage: https://github.com/usrz/minimal-ubuntu
+Description: A minimal base package for Ubuntu on EC2
+Depends: grub-efi,
+         minimal-os

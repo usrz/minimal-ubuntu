@@ -1,0 +1,68 @@
+#!/bin/sh -e
+
+# Figure out the version, either specified on the command line
+# or derived from running "linux-version"
+if test -n "${1}"
+then
+	VERSION="${1}"
+else
+	VERSION="$(
+		linux-version list | \
+		xargs linux-version sort --reverse '0' | \
+		head -n1
+	)"
+	if test "${VERSION}" = "0"
+	then
+		VERSION=""
+	fi
+fi
+
+# No version? No updates
+if test -z "${VERSION}"
+then
+	echo "No kernel version specified/found"
+	exit 1
+fi
+
+# Do our thing...
+echo "Setting Raspberry Pi boot kernel to ${VERSION}"
+
+# Copy kernel and initial ram disk
+echo "* Copying kernel..."
+cp "/boot/vmlinuz-${VERSION}" "/boot/firmware/kernel8.img"
+
+echo "* Copying ramdisk image..."
+cp "/boot/initrd.img-${VERSION}" "/boot/firmware/initrd.img"
+
+# Copy firmware
+echo "* Copying broadcom firmware..."
+tar -C "/usr/lib/firmware/${VERSION}/device-tree/broadcom" -cf - . | \
+	tar -C "/boot/firmware" -xf -
+
+echo "* Copying overlay firmware..."
+tar -C "/usr/lib/firmware/${VERSION}/device-tree" -cf - overlays | \
+	tar -C "/boot/firmware" -xf -
+
+echo "* Copying raspberry firmware..."
+tar -C "/usr/lib/linux-firmware-raspi" -cf - . | \
+  tar -C "/boot/firmware" -xf -
+
+# Copy "config.txt"
+echo "* Preparing Raspberry Pi configuration..."
+cat "/boot/config.txt" | grep -E -v '^(#|\s*$)' > "/boot/firmware/config.txt"
+
+# Copy "cmdline.txt"
+echo "* Preparing Raspberry Pi kernel command line..."
+findmnt -no PARTUUID,FSTYPE / | {
+	read PARTUUID FSTYPE
+	echo "root=PARTUUID=${PARTUUID}"
+	echo "rootfstype=${FSTYPE}"
+	cat "/boot/cmdline.txt" | \
+		sed 's|#.*$||g' | \
+		grep -v -E '^\s*$' | \
+		grep -v -E '^root(fstype)?=.*'
+} | paste -s -d ' ' > "/boot/firmware/cmdline.txt"
+
+# All done?
+echo "* All done!"
+exit 0

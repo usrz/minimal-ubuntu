@@ -1,0 +1,8 @@
+/boot/cmdline.txt
+/boot/config.txt
+/etc/modules-load.d/serial-console.conf
+/etc/systemd/network/20-wired.network
+/etc/systemd/network/20-wireless.network
+/etc/udev/rules.d/50-brcmfmac.rules
+/etc/udev/rules.d/60-gpio.rules
+/etc/wpa_supplicant/wpa_supplicant-wlan0.conf
