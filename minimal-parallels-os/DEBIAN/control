@@ -1,0 +1,12 @@
+Package: minimal-parallels-os
+Architecture: all
+Version: 2.0.0
+Priority: optional
+Section: metapackages
+Maintainer: Pier Fumagalli <pier@usrz.com>
+Homepage: https://github.com/usrz/minimal-ubuntu
+Description: A minimal base package for Ubuntu on Parallels Desktop
+Depends: binfmt-support,
+         dkms,
+         libelf-dev,
+         minimal-os
