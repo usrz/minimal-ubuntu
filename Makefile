@@ -3,7 +3,7 @@
 # ============================================================================ #
 
 .DEFAULT_GOAL := all
-.PHONY        := all deb
+.PHONY        := all deb repo
 
 BASEDIR       ?= $(realpath .)
 
@@ -42,8 +42,12 @@ all:
 		$(MAKE) -f "$(realpath $(MAKEFILE_LIST))" -C "$${SUBDIR}" "deb" ; \
 	done
 
+repo:
+	@bash ./makerepo.sh
+
 clean:
 	@echo "Cleaning up '*.deb' packages"
+	@rm -rf repo
 	@rm -f *.deb
 
 endif
