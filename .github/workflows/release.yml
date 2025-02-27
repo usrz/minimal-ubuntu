@@ -18,6 +18,6 @@ jobs:
 
       - name: Build Repository
         run: |
-          sudo apt-get install --yes gpgv1
+          sudo apt-get install --yes gnupg1
           echo "${{ secrets.GPG_KEY }}" | gpg1 --import
           make repo
