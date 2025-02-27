@@ -61,7 +61,7 @@ echo "Generating index files"
 
 popd >> "/dev/null"
 for DIR in $(find repo -type d) ; do
-  NAME=$(echo "${DIR}" | cut -b4-)
+  NAME=$(echo "${DIR}" | sed 's|^repo|minimal-ubuntu|')
   cat <<EOF > "${DIR}/index.html"
 <!DOCTYPE html>
 <html>
@@ -69,8 +69,9 @@ for DIR in $(find repo -type d) ; do
     <title>Index of ${NAME}</title>
   </head>
   <body>
-<h1>Index of ${DIR}</h1>
-<div>&#x1F4C1; <a href="..">..</a></div>
+<h1>Index of ${NAME}</h1>
+
+$(test "${DIR}" != "repo" && echo '<div>&#x1F4C2; <a href="..">..</a></div>')
 $(find "${DIR}" -mindepth 1 -maxdepth 1 -type d -not -name '.*' -printf '<div>&#x1F4C2; <a href="%f">%f</a>/</div>\n' | sort)
 $(find "${DIR}" -mindepth 1 -maxdepth 1 -type f -not -name '.*' -not -name index.html -printf '<div>&#x1F4C4; <a href="%f">%f</a> <small>%s bytes</small></div>\n' | sort)
   </body>
