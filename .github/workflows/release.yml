@@ -15,3 +15,7 @@ jobs:
 
       - name: Build Packages
         run: make all
+
+      - name: Build Repository
+        run: |
+          echo "${{ secrets.GPG_KEY }}" | gpg1 --import
