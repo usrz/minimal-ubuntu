@@ -21,3 +21,5 @@ jobs:
           sudo apt-get install --yes gnupg1
           echo "${{ secrets.GPG_KEY }}" | gpg1 --import
           make repo
+        env:
+          GPG_PASSWORD: ${{ secrets.GPG_PASSWORD }}
