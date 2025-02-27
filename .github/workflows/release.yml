@@ -18,4 +18,5 @@ jobs:
 
       - name: Build Repository
         run: |
-          echo "${{ secrets.GPG_KEY }}" | gpg --import
+          apt-get install --yes gpgv1
+          echo "${{ secrets.GPG_KEY }}" | gpg1 --import
