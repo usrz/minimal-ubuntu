@@ -1,0 +1,17 @@
+name: Release Packages
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    name: Release Package
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Build Packages
+        run: make all
