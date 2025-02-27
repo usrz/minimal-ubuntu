@@ -13,13 +13,24 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Configure Githb Pages
+        uses: actions/configure-pages@v5
+
       - name: Build Packages
         run: make all
 
       - name: Build Repository
         run: |
           sudo apt-get install --yes gnupg1
-          echo "${{ secrets.GPG_KEY }}" | gpg1 --import
+          echo "${{ secrets.GPG_KEY }}" | gpg1 --quiet --batch --import
           make repo
         env:
           GPG_PASSWORD: ${{ secrets.GPG_PASSWORD }}
+
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: repo
+
+      - name: Deploy Pages
+        uses: actions/deploy-pages@v4
