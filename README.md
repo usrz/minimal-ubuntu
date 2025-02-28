@@ -20,9 +20,10 @@ Ubuntu 24.04 (Noble Numbat) on various types of systems that support UEFI
   * [Ubuntu repositories](#ubuntu-repositories)
   * [AWS repositories](#aws-repositories)
 * [Bootstrapping the system](#bootstrapping-the-system)
-* [Minimal OS packages](#minimal-os-packages) _(TODO)_
 * [Operating system installation](#operating-system-installation)
-  * [User login](#user-login)
+* [Bonus Packages](#bonus-packages)
+  * [NodeJS 22.x](#nodejs-22x)
+* [User login](#user-login)
 * [Kernel and helper packages](#kernel-and-helper-packages)
   * [AWS EC2 kernel](#aws-ec2-kernel)
   * [Raspberry Pi kernel](#raspberry-pi-kernel)
@@ -201,22 +202,6 @@ mount  "${BOOT_DEV}" /mnt/boot/firmware
 
 
 
-Minimal OS packages
-===================
-
-> TODO: we need to set up our APT repo to download the packages
->
-> ```shell
-> curl -L -o '/mnt/minimal-os.deb' \
->   'https://github.com/usrz/minimal-ubuntu/releases/download/v2.0.0/minimal-os_2.0.0_all.deb'
-> curl -L -o '/mnt/minimal-ec2-os.deb' \
->  'https://github.com/usrz/minimal-ubuntu/releases/download/v2.0.0/minimal-ec2-os_2.0.0_all.deb'
-> curl -L -o '/mnt/minimal-rpi-os.deb' \
->  'https://github.com/usrz/minimal-ubuntu/releases/download/v2.0.0/minimal-rpi-os_2.0.0_arm64.deb'
-> ```
-
-
-
 Architecture and repository URL
 ===============================
 
@@ -342,6 +327,16 @@ deb ${REPO_URL} noble-security main restricted universe multiverse
 EOF
 ```
 
+Then we want to configure an extra source for our _minimal os packages_:
+
+```shell
+curl -L -o "/usr/share/keyrings/minimal-ubuntu.gpg" \
+  "https://usrz.github.io/minimal-ubuntu/minimal-ubuntu.gpg"
+cat > "/etc/apt/sources.list.d/minimal-ubuntu.list" << EOF
+deb [signed-by=/usr/share/keyrings/minimal-ubuntu.gpg] https://usrz.github.io/minimal-ubuntu nodistro main
+EOF
+```
+
 We then want to update the system, and install all packages required for a
 minimal system.
 
@@ -427,6 +422,22 @@ EOF
 grub-install "${BASE_DEV}"
 update-grub
 ```
+
+
+
+Bonus Packages
+==============
+
+### NodeJS 22.x
+
+```shell
+curl "https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key" \
+  | gpg1 --dearmor > "/usr/share/keyrings/nodesource.gpg"
+cat > "/etc/apt/sources.list.d/nodesource.list" << EOF
+deb [signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main
+EOF
+```
+
 
 
 
