@@ -67,13 +67,21 @@ for DIR in $(find repo -type d) ; do
 <html>
   <head>
     <title>Index of ${NAME}</title>
+    <style>
+      body { font-family: sans-serif; margin: 2em; }
+      a { text-decoration: none; color: #0077cc; }
+      a:hover { text-decoration: underline; }
+      small { color: #777; }
+    </style>
   </head>
   <body>
-<h1>Index of ${NAME}</h1>
+<h1><small>Index of</small> ${NAME}</h1>
 
 $(test "${DIR}" != "repo" && echo '<div>&#x1F4C2; <a href="..">..</a></div>')
 $(find "${DIR}" -mindepth 1 -maxdepth 1 -type d -not -name '.*' -printf '<div>&#x1F4C2; <a href="%f">%f</a>/</div>\n' | sort)
 $(find "${DIR}" -mindepth 1 -maxdepth 1 -type f -not -name '.*' -not -name index.html -printf '<div>&#x1F4C4; <a href="%f">%f</a> <small>%s bytes</small></div>\n' | sort)
+    <hr>
+    <small>Generated on $(date)</small>
   </body>
 </html>
 EOF
