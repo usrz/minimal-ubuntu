@@ -43,3 +43,5 @@ jobs:
         run: |
           RELEASE=$(date +'%Y%m%d.%H%M%S')
           gh release create "${RELEASE}" --title "${RELEASE}" --notes '' *.deb
+        env:
+          GH_TOKEN: ${{ github.token }}
