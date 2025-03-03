@@ -378,13 +378,23 @@ For AWS EC2 instances, the `minimal-ec2-os` package will install `grub` and its
 configurations on the root device. The kernel comes from `linux-aws`:
 
 ```shell
-apt-get --yes install linux-aws /minimal-ec2-os.deb
+apt-get --yes install linux-aws minimal-ec2-os
 ```
 
-After installing, as AWS EC2 boot via UEFI and `grub` simply review the contents
-of `/etc/default/grub` and run:
+After installing, as AWS EC2 boot via UEFI and `grub` we need to configure the
+`grub` bootloader with some sensible defaults for EC2:
 
 ```shell
+# Basic minimal GRUB configuration supporting EC2 serial console
+cat > "/etc/default/grub" << EOF
+GRUB_DEFAULT=0
+GRUB_TIMEOUT=5
+GRUB_TIMEOUT_STYLE="menu"
+GRUB_CMDLINE_LINUX_DEFAULT="nomodeset console=tty1 console=ttyS0"
+GRUB_DISTRIBUTOR="Minimal Ubuntu OS"
+GRUB_DISABLE_RECOVERY="true"
+EOF
+
 # Install GRUB on the boot device, and update the kernel
 grub-install "${BASE_DEV}"
 update-grub
@@ -396,7 +406,7 @@ For the Raspberry Pi, we don't need a boot loader, and the `minimal-rpi-os` will
 take care of preparing the `/boot/firmware` filesystem for booting:
 
 ```shell
-apt-get --yes install linux-raspi /minimal-rpi-os.deb
+apt-get --yes install linux-raspi minimal-rpi-os
 ```
 
 ### Other systems
@@ -485,8 +495,7 @@ We then want to clean up a bunch of files left over by the installation, some
 of them will be re-created once `minimal-ec2-os-setup` runs the first time:
 
 ```shell
-rm -f /mnt/minimal-*os*.deb \
-      /mnt/etc/ssh/ssh_host_*_key* \
+rm -f /mnt/etc/ssh/ssh_host_*_key* \
       /mnt/root/.bash_history \
       /mnt/var/log/alternatives.log \
       /mnt/var/log/apt/* \
