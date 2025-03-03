@@ -264,7 +264,7 @@ Bootstrapping the system
 Now we can simply use `debootstrap` to install the basics of the OS:
 
 ```shell
-debootstrap --arch="${TARGET_ARCH}" --variant=minbase --include=systemd noble /mnt "${REPO_URL}"
+debootstrap --arch="${TARGET_ARCH}" --variant=minbase --include=systemd,curl noble /mnt "${REPO_URL}"
 ```
 
 Once `debootstrap` is finished, we can mount the various filesystems required by
