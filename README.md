@@ -264,7 +264,7 @@ Bootstrapping the system
 Now we can simply use `debootstrap` to install the basics of the OS:
 
 ```shell
-debootstrap --arch="${TARGET_ARCH}" --variant=minbase --include=systemd,curl noble /mnt "${REPO_URL}"
+debootstrap --arch="${TARGET_ARCH}" --variant=minbase --include=systemd,curl,ca-certificates noble /mnt "${REPO_URL}"
 ```
 
 Once `debootstrap` is finished, we can mount the various filesystems required by
@@ -331,7 +331,7 @@ EOF
 Then we want to configure an extra source for our _minimal os packages_:
 
 ```shell
-curl -ksSLo "/usr/share/keyrings/minimal-ubuntu.gpg" \
+curl -sSLo "/usr/share/keyrings/minimal-ubuntu.gpg" \
   "https://usrz.github.io/minimal-ubuntu/minimal-ubuntu.gpg"
 cat > "/etc/apt/sources.list.d/minimal-ubuntu.list" << EOF
 deb [signed-by=/usr/share/keyrings/minimal-ubuntu.gpg] https://usrz.github.io/minimal-ubuntu nodistro main
