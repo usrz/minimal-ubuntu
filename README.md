@@ -473,9 +473,9 @@ passwd ubuntu
 If you need SSH access, we only allow SSH keys. Place the authorized SSH public
 key in `/home/ubuntu/.ssh/authorized_keys`.
 
-> **NOTE**: If you are in EC2-land
->
->
+> **NOTE**: If you are in EC2-land, upon first boot the SSH key will be
+> automatically downloaded from AWS, and configured to whatever key you have
+> setup when creating the instance.
 
 Finally, we allow **password-less sudo** for the `ubuntu` user. If this is not
 to your liking, take a peek at the `/etc/sudoers.d/00-minimal-os` file.
