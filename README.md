@@ -24,6 +24,7 @@ Ubuntu 24.04 (Noble Numbat) on various types of systems that support UEFI
 * [Bonus Packages](#bonus-packages)
   * [NodeJS 22.x](#nodejs-22x)
   * [Tailscale](#tailscale)
+  * [Cloudflare](#cloudflare)
 * [User login](#user-login)
 * [Kernel and helper packages](#kernel-and-helper-packages)
   * [AWS EC2 kernel](#aws-ec2-kernel)
@@ -333,6 +334,7 @@ Then we want to configure an extra source for our _minimal os packages_:
 ```shell
 curl -sSLo "/usr/share/keyrings/minimal-ubuntu.gpg" \
   "https://usrz.github.io/minimal-ubuntu/minimal-ubuntu.gpg"
+
 cat > "/etc/apt/sources.list.d/minimal-ubuntu.list" << EOF
 deb [signed-by=/usr/share/keyrings/minimal-ubuntu.gpg] https://usrz.github.io/minimal-ubuntu nodistro main
 EOF
@@ -444,9 +446,13 @@ Bonus Packages
 ```shell
 curl -sSL "https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key" \
   | gpg1 --dearmor > "/usr/share/keyrings/nodesource.gpg"
+
 cat > "/etc/apt/sources.list.d/nodesource.list" << EOF
 deb [signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main
 EOF
+
+apt-get update
+apt-get install nodejs
 ```
 
 ### Tailscale
@@ -454,9 +460,27 @@ EOF
 ```shell
 curl -sSLo "/usr/share/keyrings/tailscale.gpg" \
   "https://pkgs.tailscale.com/stable/ubuntu/noble.noarmor.gpg"
+
 cat > "/etc/apt/sources.list.d/tailscale.list" << EOF
 deb [signed-by=/usr/share/keyrings/tailscale.gpg] https://pkgs.tailscale.com/stable/ubuntu noble main
 EOF
+
+apt-get update
+apt-get install tailscale
+```
+
+### Cloudflare
+
+```shell
+curl -sSLo "/usr/share/keyrings/cloudflared.gpg" \
+  "https://pkg.cloudflare.com/cloudflare-main.gpg"
+
+cat > "/etc/apt/sources.list.d/cloudflared.list" << EOF
+deb [signed-by=/usr/share/keyrings/cloudflared.gpg] https://pkg.cloudflare.com/cloudflared noble main
+EOF
+
+apt-get update
+apt-get install cloudflared
 ```
 
 
